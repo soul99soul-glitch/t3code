@@ -266,12 +266,16 @@ export function AppearanceSettingsPanel() {
                 }}
               >
                 <SelectTrigger size="sm" className="w-full min-w-0" aria-label="Chat width">
-                  <SelectValue>{CHAT_WIDTH_LABELS[settings.chatWidth]}</SelectValue>
+                  <SelectValue>
+                    {translateWebSource(locale, CHAT_WIDTH_LABELS[settings.chatWidth])}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem value="comfortable">Comfortable (default)</SelectItem>
-                  <SelectItem value="wide">Wide</SelectItem>
-                  <SelectItem value="full">Full</SelectItem>
+                  <SelectItem value="comfortable">
+                    {translateWebSource(locale, "Comfortable (default)")}
+                  </SelectItem>
+                  <SelectItem value="wide">{translateWebSource(locale, "Wide")}</SelectItem>
+                  <SelectItem value="full">{translateWebSource(locale, "Full")}</SelectItem>
                 </SelectPopup>
               </Select>
             </div>
@@ -301,11 +305,15 @@ export function AppearanceSettingsPanel() {
                 }}
               >
                 <SelectTrigger size="sm" className="w-full min-w-0" aria-label="Effort display">
-                  <SelectValue>{EFFORT_DISPLAY_LABELS[settings.effortDisplay]}</SelectValue>
+                  <SelectValue>
+                    {translateWebSource(locale, EFFORT_DISPLAY_LABELS[settings.effortDisplay])}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem value="label">Word (default)</SelectItem>
-                  <SelectItem value="bars">Bars</SelectItem>
+                  <SelectItem value="label">
+                    {translateWebSource(locale, "Word (default)")}
+                  </SelectItem>
+                  <SelectItem value="bars">{translateWebSource(locale, "Bars")}</SelectItem>
                 </SelectPopup>
               </Select>
             </div>

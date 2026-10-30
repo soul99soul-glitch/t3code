@@ -1,6 +1,9 @@
 import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 
 const EN_MESSAGES = {
+  "settings.sendShortcut.multiline": "{modifier} + Enter for multiline prompts",
+  "settings.sendShortcut.always": "{modifier} + Enter always",
+
   "connection.retryIn": "retrying in {seconds}s",
   "connection.retrying": "retrying",
   "settings.about.updateTrack.remainingOne": "1 machine still runs",
@@ -3214,6 +3217,9 @@ export type WebMessages = Readonly<Record<WebMessageKey, string>>;
 export type WebMessageValues = Readonly<Record<string, string | number>>;
 
 const ZH_CN_MESSAGES = {
+  "settings.sendShortcut.multiline": "多行消息使用 {modifier} + Enter 发送",
+  "settings.sendShortcut.always": "始终使用 {modifier} + Enter 发送",
+
   "connection.retryIn": "{seconds} 秒后重试",
   "connection.retrying": "正在重试",
   "settings.about.updateTrack.remainingOne": "仍有 1 台设备运行于",
@@ -6288,6 +6294,176 @@ for (const [key, source] of Object.entries(EN_MESSAGES) as ReadonlyArray<
 // New upstream settings copy can be localized here before it receives a stable
 // message key. Settings containers and search both consume this same table.
 const ZH_CN_SOURCE_MESSAGES: Readonly<Record<string, string>> = {
+  "Settings sections": "设置分类",
+  SnapShots: "智能截图",
+  Notifications: "通知",
+  "Thread notifications": "会话通知",
+  "In-app notifications": "应用内通知",
+  "System alerts when a thread finishes, fails, or needs input or approval. Applies to this device while T3 Code is open.":
+    "会话完成、失败或需要输入或审批时显示系统通知。仅对运行 T3 Code 的当前设备生效。",
+  "Show a toast when another thread finishes, fails, or needs input or approval while this app has focus.":
+    "使用当前应用时，其他会话完成、失败或需要输入或审批时显示提示。",
+  "Notifications only": "仅通知",
+  "Sound only": "仅声音",
+  "Notifications with sound": "通知和声音",
+  "Notifications need a supported browser over HTTPS, or the desktop app. Sound only is still available.":
+    "系统通知需要通过 HTTPS 使用支持的浏览器，或使用桌面应用。仍可选择仅声音。",
+  "Notifications are unavailable in this browser. Sound only is still available.":
+    "当前浏览器不支持系统通知，仍可选择仅声音。",
+  "Allow notifications in your browser or system settings, then choose this option again. Sound only is still available.":
+    "请先在浏览器或系统设置中允许通知，再选择此选项。仍可选择仅声音。",
+  "Order of projects in the sidebar project picker and command palette.":
+    "设置侧栏项目选择器和命令面板中的项目顺序。",
+  "Project order": "项目排序",
+  "project order": "项目排序",
+  "Last user message": "最近一条用户消息",
+  "Created at": "创建时间",
+  Manual: "手动排序",
+  "Fold working and monitoring threads into a Working section. They return to the top of the inbox when they need you. The boring sidebar in Labs has no Working section.":
+    "将运行中和监控中的会话归入“进行中”分区。需要你处理时，会话会回到收件箱顶部。实验室中的经典侧栏没有此分区。",
+  "Confirm thread unpinning": "取消置顶时确认",
+  "Confirm thread archiving": "归档会话时确认",
+  "Confirm thread deletion": "删除会话时确认",
+  "Quit shortcut behavior": "退出快捷键行为",
+  Display: "显示",
+  "Timestamp format": "时间格式",
+  Composer: "输入框",
+  "Show formatted Markdown as you type.": "输入时显示 Markdown 排版效果。",
+  "rich text composer": "富文本输入框",
+  "Rich text composer": "富文本输入框",
+  "Choose when Enter sends a prompt or inserts a new line":
+    "选择按下 Enter 时发送消息还是插入换行。",
+  "send shortcut": "发送快捷键",
+  "Send shortcut": "发送快捷键",
+  "Follow-ups": "后续消息",
+  "follow-up behavior": "后续消息处理方式",
+  "Follow-up behavior": "后续消息处理方式",
+  Queue: "排队",
+  Steer: "即时引导",
+  "Choose colors for additions and deletions, including change counts.":
+    "选择新增和删除内容的显示颜色，同时用于变更数量。",
+  "diff colors": "差异颜色",
+  "Diff colors": "差异颜色",
+  "Blue & orange": "蓝色和橙色",
+  "Red & green": "红色和绿色",
+  "Red & green (default)": "红色和绿色（默认）",
+  Diffs: "差异",
+  "Hide whitespace changes by default": "默认隐藏空白字符变更",
+  "Start with files expanded or collapsed when opening diffs or a pull request's Code tab.":
+    "打开差异或拉取请求的“代码”页时，默认展开或折叠文件。",
+  "default diff file state": "差异文件默认状态",
+  "Default diff file state": "差异文件默认状态",
+  Collapsed: "折叠",
+  Expanded: "展开",
+  "Open linked pull requests first. Otherwise, open Changes for edits to at least 3 files or 50 lines.":
+    "优先打开关联的拉取请求；没有关联请求时，变更达到 3 个文件或 50 行便打开“变更”面板。",
+  "When to compact an idle Claude thread over 200,000 tokens: after you return, just before its prompt cache expires, or never. Each Claude provider can override this.":
+    "闲置的 Claude 会话超过 200,000 token 时，选择在你返回后、提示缓存即将过期前压缩，或不自动压缩。每个 Claude 服务提供方可单独覆盖此设置。",
+  "compact idle threads": "压缩闲置会话",
+  "Compact idle threads": "压缩闲置会话",
+  "New projects": "新项目",
+  "Add project base directory": "新项目基础目录",
+  "Resume usage-limit stops at the reported reset time. Each thread can cancel its scheduled continuation.":
+    "在服务提供方报告的额度重置时间恢复因限额停止的会话。每个会话都可取消计划中的继续执行。",
+  "Snooze usage-limit stops until reset. Pair with resume to continue on wake.":
+    "将因限额停止的会话推迟到额度重置后。配合自动恢复，可在唤醒后继续执行。",
+  "Auto-settle": "自动收起",
+  "Keep threads with a PR": "保留有关联拉取请求的会话",
+  "Inactivity does not settle threads with a pull request. Merge and close still do.":
+    "有关联拉取请求的会话不会因闲置被收起；合并或关闭后仍会收起。",
+  "Used for thread titles and other generated text on connected devices with this provider. Source control can override it.":
+    "用于使用此服务提供方的已连接设备上的会话标题和其他生成文本。源代码管理可单独覆盖此设置。",
+  "Connect an environment to choose its text generation model.":
+    "连接一个环境后，可选择它的文本生成模型。",
+  "Text generation model not saved": "文本生成模型未保存",
+  "The selected targets use different streaming modes.": "所选目标使用了不同的流式显示模式。",
+  "response streaming": "响应流式显示",
+  "Response streaming": "响应流式显示",
+  Updates: "更新",
+  "Check installed provider CLIs for newer available versions and fetch model catalog updates. When off, new models may not appear.":
+    "检查已安装的服务提供方 CLI 是否有新版本，并更新模型列表。关闭后，新模型可能不会显示。",
+  "Check provider versions": "检查服务提供方版本",
+  "All selected connected environments must support restart continuation.":
+    "所有选中的已连接环境都必须支持重启后继续执行。",
+  "continue threads after restarts": "重启后继续会话",
+  "Continue threads after restarts": "重启后继续会话",
+  "Inspect processes, resource use, and logs on this environment.":
+    "查看此环境的进程、资源使用情况和日志。",
+  "Inspect processes, resource use, and logs on one environment at a time.":
+    "一次查看一个环境的进程、资源使用情况和日志。",
+  Legal: "法律信息",
+  "How we handle your data, including the anonymous usage data T3 Code collects.":
+    "了解我们如何处理你的数据，包括 T3 Code 收集的匿名使用数据。",
+  "View policy": "查看政策",
+  "Notices for dependencies, assets, and optional tools used by T3 Code.":
+    "T3 Code 使用的依赖项、素材和可选工具的许可声明。",
+  "View licenses": "查看许可证",
+  Legacy: "旧版功能",
+  "Set how wide messages and the composer can grow on large screens.":
+    "设置大屏幕上消息和输入框的最大宽度。",
+  "chat width": "对话宽度",
+  "Chat width": "对话宽度",
+  "Comfortable (default)": "舒适（默认）",
+  Comfortable: "舒适",
+  Wide: "宽",
+  Word: "文字",
+  "Show reasoning effort in the composer as its name, such as High, or as bars.":
+    "在输入框中使用文字（例如 High）或条形图显示推理强度。",
+  "effort display": "推理强度显示",
+  "Effort display": "推理强度显示",
+  "Word (default)": "文字（默认）",
+  Bars: "条形图",
+  "Panel animation duration": "面板动画时长",
+  "Show Dev or Nightly artwork in the sidebar header.":
+    "在侧栏顶部显示 Dev 或 Nightly 版本的图案。",
+  "Keep branch and worktree controls below the composer after a thread starts.":
+    "会话开始后，在输入框下方保留分支和工作树控件。",
+  "composer context": "输入框上下文",
+  "Keep composer context visible in active threads": "在活动会话中保留输入框上下文控件",
+  "Local simulators": "本机模拟器",
+  "Device sources": "设备来源",
+  "Show key presses in recordings": "在录制中显示按键",
+  "Show mouse presses in recordings": "在录制中显示鼠标点击",
+  "Open pull requests in T3 Code": "在 T3 Code 中打开拉取请求",
+  "Boring sidebar (group by project)": "经典侧栏（按项目分组）",
+  "Two-line folder rows": "双行文件夹条目",
+  "Linked environments": "关联环境",
+  "Local environment": "本机环境",
+  "Remove agent credits when merging": "合并时移除智能体署名",
+  "Review guide instructions": "审阅指南指令",
+  "Worktree location": "工作树位置",
+  "Delete now": "立即删除",
+  "Keep worktrees with local changes": "保留有本地变更的工作树",
+  "Artifacts and logs": "产物和日志",
+  "Cursor account usage": "Cursor 账户用量",
+  "Worktree cleanup": "工作树清理",
+  "Project defaults and overrides": "项目默认值与覆盖设置",
+  "Project overview": "项目概览",
+  "Default model": "默认模型",
+  "Thread details": "会话详情",
+  "Composer context": "输入框上下文",
+  "Snooze options": "稍后处理选项",
+  "Simlock device hosts (alpha)": "Simlock 设备主机（内测）",
+  Submodules: "子模块",
+  "t3 command": "t3 命令",
+  "Mobile app": "移动应用",
+  "Privacy policy": "隐私政策",
+  "Open source licenses": "开源许可证",
+  "Include app text": "包含应用文本",
+  "Capture shortcut": "截图快捷键",
+  "Capture sound": "截图声音",
+  "Capture flash": "截图闪光",
+  "Capture animations": "截图动画",
+  "Agents can use devices": "允许智能体使用设备",
+  "Use devices": "使用设备",
+  "Default merge method": "默认合并方式",
+  "Review guides (beta)": "审阅指南（测试版）",
+  "Review guide model": "审阅指南模型",
+  "Tailscale HTTPS": "Tailscale HTTPS",
+  "Hold webhooks while offline": "离线时暂存 Webhook",
+  "Load balancing": "负载均衡",
+  "Pull request sharing": "拉取请求共享",
+
   "More approval options": "更多审批选项",
   "Always allow this session": "在此会话中始终允许",
   "App access approval": "应用访问审批",
@@ -7687,7 +7863,7 @@ const ZH_CN_SOURCE_MESSAGES: Readonly<Record<string, string>> = {
   value: "值",
   Label: "名称",
   Connect: "连接",
-  Agents: "Agent",
+  Agents: "智能体",
   Projects: "项目",
   "Could not finish setup": "无法完成设置",
   "Your settings could not be saved. Try again.": "无法保存设置，请重试。",
