@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import {
   AuthOrchestrationOperateScope,
   AuthProvidersManageScope,
@@ -77,6 +79,7 @@ export function AcpSessionManagementSection(props: {
   readonly projects: ReadonlyArray<AcpSessionProject>;
   readonly readOnly: boolean;
 }) {
+  const { locale: sourceLocale } = useI18n();
   const canOperate = useEnvironmentScope(props.environmentId, AuthOrchestrationOperateScope);
   const canRead = useEnvironmentScope(props.environmentId, AuthOrchestrationReadScope);
   const [projectId, setProjectId] = useState<ProjectId | null>(props.projects[0]?.id ?? null);
@@ -319,8 +322,11 @@ export function AcpSessionManagementSection(props: {
   return (
     <div className="grid gap-3">
       <SettingsRow
-        title="Native sessions"
-        description="Resume agent-owned conversations as T3 threads."
+        title={translateWebSource(sourceLocale, "Native sessions")}
+        description={translateWebSource(
+          sourceLocale,
+          "Resume agent-owned conversations as T3 threads.",
+        )}
         status={
           canList && props.projects.length === 0
             ? "Add a project before importing sessions."
@@ -353,7 +359,11 @@ export function AcpSessionManagementSection(props: {
                     setProviderDrafts({});
                   }}
                 >
-                  <SelectTrigger aria-label="Project for ACP sessions" className="w-40" size="sm">
+                  <SelectTrigger
+                    aria-label={translateWebSource(sourceLocale, "Project for ACP sessions")}
+                    className="w-40"
+                    size="sm"
+                  >
                     <SelectValue>
                       {props.projects.find((project) => project.id === projectId)?.title}
                     </SelectValue>
@@ -457,9 +467,14 @@ export function AcpSessionManagementSection(props: {
         <div className="grid gap-3 border-t border-border/60 px-3 py-3 sm:px-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-medium text-foreground">Agent providers</p>
+              <p className="text-xs font-medium text-foreground">
+                {translateWebSource(sourceLocale, "Agent providers")}
+              </p>
               <p className="text-xs text-muted-foreground">
-                Configure non-secret routing. Headers are write-only.
+                {translateWebSource(
+                  sourceLocale,
+                  "Configure non-secret routing. Headers are write-only.",
+                )}
               </p>
             </div>
             <Button
@@ -484,7 +499,11 @@ export function AcpSessionManagementSection(props: {
                 setProviderDrafts({});
               }}
             >
-              <SelectTrigger aria-label="Project for ACP providers" className="min-w-48" size="xs">
+              <SelectTrigger
+                aria-label={translateWebSource(sourceLocale, "Project for ACP providers")}
+                className="min-w-48"
+                size="xs"
+              >
                 <SelectValue>
                   {props.projects.find((project) => project.id === projectId)?.title}
                 </SelectValue>
@@ -547,7 +566,7 @@ export function AcpSessionManagementSection(props: {
                             disabled={props.readOnly || savingProviderId !== null}
                             onClick={() => void disableConfiguredProvider(provider)}
                           >
-                            Disable
+                            {translateWebSource(sourceLocale, "Disable")}
                           </Button>
                         ) : null}
                       </div>
@@ -575,7 +594,7 @@ export function AcpSessionManagementSection(props: {
                         size="sm"
                         type="url"
                         aria-label={`${provider.providerId} base URL`}
-                        placeholder="https://api.example.com"
+                        placeholder={translateWebSource(sourceLocale, "https://api.example.com")}
                         value={draft.baseUrl}
                         disabled={props.readOnly || savingProviderId !== null}
                         onValueChange={(value) => updateDraft({ baseUrl: value })}
@@ -585,7 +604,10 @@ export function AcpSessionManagementSection(props: {
                       size="sm"
                       type="password"
                       aria-label={`${provider.providerId} write-only headers JSON`}
-                      placeholder='Write-only headers JSON, e.g. {"Authorization":"Bearer …"}'
+                      placeholder={translateWebSource(
+                        sourceLocale,
+                        'Write-only headers JSON, e.g. {"Authorization":"Bearer …"}',
+                      )}
                       value={draft.headers}
                       disabled={props.readOnly || savingProviderId !== null}
                       onValueChange={(value) => updateDraft({ headers: value })}

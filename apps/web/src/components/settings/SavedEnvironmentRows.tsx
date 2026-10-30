@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { SessionPermissions } from "./SessionPermissions";
 import {
   ChevronRightIcon,
@@ -517,6 +519,7 @@ function T3ConnectTunnelUsage({ tunnelLimit }: { readonly tunnelLimit: number | 
 }
 
 function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: boolean }) {
+  const { locale, t } = useI18n();
   const primaryEnvironmentId = usePrimaryEnvironmentId();
   const {
     isSignedIn,
@@ -534,9 +537,7 @@ function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: b
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingPreference, setIsUpdatingPreference] = useState(false);
 
-  const disabledReason = canManageRelay
-    ? null
-    : "Your session does not have permission to manage T3 Connect access.";
+  const disabledReason = canManageRelay ? null : t("connections.cloudLink.permissionRequired");
   const isBusy = isUpdating || isUpdatingPreference;
   const switchDisabled =
     !canManageRelay ||
@@ -576,7 +577,7 @@ function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: b
           rel="noreferrer"
           className="underline underline-offset-2"
         >
-          More info
+          {translateWebSource(locale, "More info")}
         </a>
       </span>
     ) : null;
@@ -593,15 +594,15 @@ function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: b
       toastManager.add({
         type: "success",
         title: enabled
-          ? "T3 Connect linked"
+          ? t("connections.cloudLink.linked")
           : publishAgentActivity
-            ? "T3 Connect tunnel disabled"
-            : "T3 Connect unlinked",
+            ? t("connections.cloudLink.tunnelDisabled")
+            : t("connections.cloudLink.unlinked"),
         description: enabled
-          ? "This environment is available through T3 Connect."
+          ? t("connections.cloudLink.available")
           : publishAgentActivity
-            ? "The managed tunnel was removed. Agent activity publishing stays on."
-            : "This environment is no longer available through T3 Connect.",
+            ? t("connections.cloudLink.tunnelRemovedPublishingOn")
+            : t("connections.cloudLink.unavailable"),
       });
     }
     setIsUpdating(false);
@@ -618,10 +619,12 @@ function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: b
     if (ok) {
       toastManager.add({
         type: "success",
-        title: enabled ? "Agent activity enabled" : "Agent activity disabled",
+        title: enabled
+          ? t("connections.cloudLink.activityEnabled")
+          : t("connections.cloudLink.activityDisabled"),
         description: enabled
-          ? "This environment publishes agent activity to your mobile clients."
-          : "This environment will stop publishing agent activity.",
+          ? t("connections.cloudLink.activityPublishing")
+          : t("connections.cloudLink.activityStopped"),
       });
     }
     setIsUpdatingPreference(false);
@@ -655,16 +658,19 @@ function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: b
             signedOut
               ? "Sign in to make this environment available to your other devices through T3 Connect."
               : linkRevoked
-                ? "This environment was removed from T3 Connect. Turn it on to link it again."
+                ? translateWebSource(
+                    locale,
+                    "This environment was removed from T3 Connect. Turn it on to link it again.",
+                  )
                 : managedTunnelActive
                   ? reachability?.status === "unreachable"
                     ? "T3 Connect is on, but other devices cannot reach this environment."
                     : reachability?.status === "reachable"
-                      ? "This environment is available to your other devices through T3 Connect."
+                      ? t("connections.cloudLink.otherDevicesAvailable")
                       : "T3 Connect is on. Reachability has not been checked yet."
                   : managedTunnelOutOfSync
                     ? "T3 Connect is out of sync. This environment is linked only to publish agent activity, so other devices cannot connect. Turn T3 Connect on to repair it."
-                    : "Make this environment available to your other devices through T3 Connect."
+                    : t("connections.cloudLink.otherDevicesEnable")
           }
           status={operationError ?? primaryCloudLinkState.error ?? reachabilityStatus}
           control={
@@ -694,14 +700,14 @@ function ConfiguredCloudLinkRow({ canManageRelay }: { readonly canManageRelay: b
           description={
             signedOut
               ? "Sign in to send activity to mobile notifications and Live Activities."
-              : "Send activity to mobile notifications and Live Activities without T3 Connect."
+              : t("connections.cloudLink.publishDescription")
           }
           control={
             signedOut ? (
               signInButton
             ) : (
               <CloudLinkSwitch
-                ariaLabel="Publish agent activity to mobile clients"
+                ariaLabel={t("connections.cloudLink.publishAria")}
                 checked={publishAgentActivity}
                 disabled={switchDisabled}
                 disabledReason={disabledReason}
@@ -750,17 +756,17 @@ export function CloudLinkRow({
 }
 
 function EmptyRemoteEnvironments({ cloudEnabled = true }: { readonly cloudEnabled?: boolean }) {
+  const { t } = useI18n();
+
   return (
     <Empty className="min-h-52">
       <EmptyMedia variant="icon">
         <ChevronsLeftRightEllipsisIcon />
       </EmptyMedia>
       <EmptyHeader>
-        <EmptyTitle>No saved remote environments</EmptyTitle>
+        <EmptyTitle>{t("connections.empty.title")}</EmptyTitle>
         <EmptyDescription>
-          {cloudEnabled
-            ? "Click “Add environment” to pair another environment, or connect one from T3 Connect."
-            : "Click “Add environment” to pair another environment."}
+          {cloudEnabled ? t("connections.empty.withCloud") : t("connections.empty.withoutCloud")}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

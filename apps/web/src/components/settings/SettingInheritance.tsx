@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import {
   DEFAULT_SERVER_SETTINGS,
   PROJECT_FILE_BACKED_SETTINGS,
@@ -151,13 +153,15 @@ export interface SettingOverridingProject extends ProjectOverrideEntry {
   readonly open: () => void;
 }
 
+const EMPTY_OVERRIDING_PROJECTS: readonly SettingOverridingProject[] = [];
+
 export function SettingInheritance({
   state,
   summary,
   targets,
   environments,
   keys,
-  overridingProjects = [],
+  overridingProjects = EMPTY_OVERRIDING_PROJECTS,
   onClearOverrides,
 }: {
   state: SettingInheritanceState;
@@ -171,6 +175,7 @@ export function SettingInheritance({
   overridingProjects?: readonly SettingOverridingProject[];
   onClearOverrides?: (entries: readonly ProjectOverrideEntry[]) => void;
 }) {
+  const { locale: sourceLocale } = useI18n();
   const scopeContext = useOptionalSettingsScope();
   const key = keys[0];
   if (!key || targets.length === 0) return null;
@@ -364,7 +369,7 @@ export function SettingInheritance({
                     {chain}
                     {hasMultipleEnvironments ? (
                       <p className="px-2 pt-1.5 text-xs text-muted-foreground">
-                        Same on all machines
+                        {translateWebSource(sourceLocale, "Same on all machines")}
                       </p>
                     ) : null}
                   </>

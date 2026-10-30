@@ -1,3 +1,5 @@
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 import * as Schema from "effect/Schema";
 import { deriveProjectIdentity } from "../../projectIdentity";
 import { ProjectMonogram } from "../ProjectMonogram";
@@ -84,6 +86,7 @@ function ProjectIconPickerBody({
   readonly onClose: () => void;
   readonly onSelect: (icon: ProjectIconOverride) => void;
 }) {
+  const { locale, t } = useI18n();
   const automatic = deriveProjectIdentity(projectName);
   const [mode, setMode] = useState<ProjectIconOverride["kind"]>(current?.kind ?? "lucide");
   const [iconName, setIconName] = useState<string>(
@@ -118,12 +121,12 @@ function ProjectIconPickerBody({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Choose project icon</DialogTitle>
+        <DialogTitle>{t("projectIconPicker.title")}</DialogTitle>
         <DialogDescription>Choose an icon, emoji, or monogram.</DialogDescription>
       </DialogHeader>
       <DialogPanel className="flex min-h-0 flex-col">
         <ToggleGroup
-          aria-label="Icon type"
+          aria-label={t("projectIconPicker.type")}
           variant="segmented"
           value={[mode]}
           onValueChange={(next) => {
@@ -131,8 +134,8 @@ function ProjectIconPickerBody({
             if (value === "lucide" || value === "emoji" || value === "monogram") setMode(value);
           }}
         >
-          <Toggle value="lucide">Icons</Toggle>
-          <Toggle value="emoji">Emoji</Toggle>
+          <Toggle value="lucide">{t("projectIconPicker.icons")}</Toggle>
+          <Toggle value="emoji">{t("projectIconPicker.emoji")}</Toggle>
           <Toggle value="monogram">Monogram</Toggle>
         </ToggleGroup>
 
@@ -144,7 +147,7 @@ function ProjectIconPickerBody({
                 <button
                   key={option.value}
                   type="button"
-                  aria-label={option.label}
+                  aria-label={translateWebSource(locale, option.label)}
                   aria-pressed={color === option.value}
                   className={cn(
                     "flex size-6 items-center justify-center rounded-full border border-transparent outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -189,7 +192,9 @@ function ProjectIconPickerBody({
               </div>
             </ScrollArea>
             {icons.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">No icons found.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {t("projectIconPicker.empty")}
+              </p>
             ) : null}
           </>
         ) : mode === "monogram" ? (
@@ -224,7 +229,7 @@ function ProjectIconPickerBody({
                   <button
                     key={option.emoji}
                     type="button"
-                    aria-label={option.label}
+                    aria-label={translateWebSource(locale, option.label)}
                     aria-pressed={emoji === option.emoji}
                     className={cn(
                       "flex aspect-square items-center justify-center rounded-md border border-transparent text-xl outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -239,12 +244,12 @@ function ProjectIconPickerBody({
             </ScrollArea>
             <div>
               <div className="mb-2 text-xs font-medium text-muted-foreground">
-                Or paste any emoji
+                {t("projectIconPicker.pasteAny")}
               </div>
               <Input
                 value={customEmoji}
-                aria-label="Custom emoji"
-                placeholder="Paste an emoji"
+                aria-label={t("projectIconPicker.customEmoji")}
+                placeholder={t("projectIconPicker.pasteEmoji")}
                 onChange={(event) => {
                   const value = event.currentTarget.value;
                   setCustomEmoji(value);
@@ -258,10 +263,10 @@ function ProjectIconPickerBody({
       </DialogPanel>
       <DialogFooter>
         <Button variant="outline" onClick={onClose}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button onClick={save} disabled={mode === "monogram" && !validMonogram}>
-          Save icon
+          {t("projectIconPicker.save")}
         </Button>
       </DialogFooter>
     </>

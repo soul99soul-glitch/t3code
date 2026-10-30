@@ -11,6 +11,8 @@ import { ComposerPendingApprovalActions } from "./ComposerPendingApprovalActions
 import { ToolActivityIconView, type WorkEntryIconName } from "./TimelineToolActivityIcon";
 import { TimelineRowCtx } from "./timelineRowContext";
 import { WorkLogRow } from "./WorkLog";
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 
 const APPROVAL_PRESENTATION = {
   command: { icon: "terminal", label: "Command approval", detailLabel: "Command" },
@@ -36,13 +38,15 @@ export const TimelinePendingApprovalRow = memo(function TimelinePendingApprovalR
 }: {
   approval: PendingApproval;
 }) {
+  const { locale } = useI18n();
+  const tx = (source: string) => translateWebSource(locale, source);
   const { respondingRequestIds, canOperateThread, onRespondToApproval } = use(TimelineRowCtx);
   const presentation = APPROVAL_PRESENTATION[approval.requestKind];
   const canRespond = approval.responseCapability === "live";
   return (
     <WorkLogRow
       role="group"
-      aria-label={presentation.label}
+      aria-label={tx(presentation.label)}
       data-v2-item-type="approval_request"
       wrapLabel
       icon={
@@ -55,12 +59,12 @@ export const TimelinePendingApprovalRow = memo(function TimelinePendingApprovalR
       }
       label={
         <code
-          aria-label={presentation.detailLabel}
+          aria-label={tx(presentation.detailLabel)}
           className="block max-h-40 min-w-0 overflow-auto whitespace-pre-wrap font-mono text-xs leading-5 text-foreground select-text! wrap-anywhere [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70"
           data-approval-detail="complete"
           tabIndex={0}
         >
-          {approval.detail || presentation.label}
+          {approval.detail || tx(presentation.label)}
         </code>
       }
     >
@@ -76,7 +80,7 @@ export const TimelinePendingApprovalRow = memo(function TimelinePendingApprovalR
             <>
               <span className="inline-flex items-center gap-1 text-warning">
                 <ShieldIcon aria-hidden className="size-3 shrink-0" />
-                Waiting for approval
+                {tx("Waiting for approval")}
               </span>
               {onRespondToApproval ? (
                 <>
@@ -97,21 +101,21 @@ export const TimelinePendingApprovalRow = memo(function TimelinePendingApprovalR
             </>
           ) : (
             <span className="text-warning">
-              Provider process is gone. Interrupt or restart the run to respond.
+              {tx("Provider process is gone. Interrupt or restart the run to respond.")}
             </span>
           )}
           {approval.fullAccessOverride ? (
             <Popover>
               <PopoverTrigger openOnHover render={<InlineButton tone="muted" />}>
-                {FULL_ACCESS_OVERRIDE_QUESTION}
+                {tx(FULL_ACCESS_OVERRIDE_QUESTION)}
               </PopoverTrigger>
               <PopoverPopup
-                aria-label={FULL_ACCESS_OVERRIDE_QUESTION}
+                aria-label={tx(FULL_ACCESS_OVERRIDE_QUESTION)}
                 tooltipStyle
                 side="top"
                 className="max-w-[min(22rem,calc(100vw-2rem))] whitespace-normal"
               >
-                {fullAccessOverrideExplanation(approval.fullAccessOverride)}
+                {tx(fullAccessOverrideExplanation(approval.fullAccessOverride))}
               </PopoverPopup>
             </Popover>
           ) : null}

@@ -1,3 +1,4 @@
+import { translateWebSource } from "~/i18n/messages";
 import {
   buildTraitsTriggerDisplay,
   getDescriptorStringValue,
@@ -26,6 +27,7 @@ import {
 } from "@t3tools/shared/model";
 import { memo, type ReactNode, useRef } from "react";
 import { GaugeIcon, ZapIcon } from "lucide-react";
+import { useI18n } from "~/i18n/WebI18nContext";
 import {
   Menu,
   MenuGroup,
@@ -105,9 +107,10 @@ type TraitsPersistence =
     };
 
 function DefaultBadge() {
+  const { t: translateRelease } = useI18n();
   return (
     <Badge variant="outline" size="sm" className="min-w-0">
-      Default
+      {translateRelease("connections.endpoint.default")}
     </Badge>
   );
 }
@@ -342,6 +345,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
   planModeEnabled,
   ...persistence
 }: TraitsMenuContentProps & TraitsPersistence) {
+  const { locale: releaseLocale, t } = useI18n();
   const modelSelection =
     instanceId && model ? { instanceId, model, options: modelOptions ?? [] } : null;
   const setProviderModelOptions = useComposerDraftStore((store) => store.setProviderModelOptions);
@@ -443,8 +447,10 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
               </div>
               {ultrathinkInBodyText && descriptor.id === primarySelectDescriptor?.id ? (
                 <div className="px-2 pb-1.5 text-muted-foreground/80 text-xs">
-                  Your prompt contains &quot;ultrathink&quot; in the text. Remove it to change this
-                  option.
+                  {translateWebSource(
+                    releaseLocale,
+                    "Your prompt contains &quot;ultrathink&quot; in the text. Remove it to change this option.",
+                  )}
                 </div>
               ) : null}
               <MenuRadioGroup
@@ -498,7 +504,11 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
                 {(["on", "off"] as const).map((value) => (
                   <MenuRadioItem key={value} value={value} hideIndicator closeOnClick>
                     <span className="flex w-full min-w-0 items-center justify-between gap-3">
-                      <span>{value === "on" ? "On" : "Off"}</span>
+                      <span>
+                        {value === "on"
+                          ? translateWebSource(releaseLocale, "On")
+                          : t("connections.wsl.off")}
+                      </span>
                     </span>
                   </MenuRadioItem>
                 ))}
@@ -556,6 +566,7 @@ export const TraitsPicker = memo(function TraitsPicker({
     hidden?: boolean;
     disabled?: boolean;
   }) {
+  const { t } = useI18n();
   const composerFloatingLayerProps = useComposerMenuProps();
   const [isMenuOpen, setIsMenuOpen] = useComposerMenuState(hidden || disabled);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -584,7 +595,7 @@ export const TraitsPicker = memo(function TraitsPicker({
   }
 
   const {
-    label: triggerLabel,
+    label: rawTriggerLabel,
     speedLabel,
     otherLabels,
   } = buildTraitsTriggerDisplay({
@@ -595,6 +606,10 @@ export const TraitsPicker = memo(function TraitsPicker({
     modelSelection: instanceId && model ? { instanceId, model, options: modelOptions ?? [] } : null,
     reportedModelSelection,
   });
+  const triggerLabel =
+    provider === "codex" && rawTriggerLabel === "Ultrafast"
+      ? t("composer.traits.ultrafast")
+      : rawTriggerLabel;
   const isCodexStyle = provider === "codex";
   // In the composer the glyph has no word, so the tooltip and label name the control.
   const triggerDescription = isComposerOwned

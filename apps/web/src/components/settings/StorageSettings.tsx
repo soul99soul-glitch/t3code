@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import type {
   StorageCleanupReport,
   StorageCleanupSettings,
@@ -189,6 +191,7 @@ function CleanupResults({
   report: StorageCleanupReport;
   environmentLabel: string;
 }) {
+  const { locale: sourceLocale } = useI18n();
   return (
     <>
       {report.entries.map((entry, index) => {
@@ -210,23 +213,23 @@ function CleanupResults({
                   {entry.reason}
                 </span>
                 <span className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 border-l border-border/60 pl-3">
-                  <span>Machine</span>
+                  <span>{translateWebSource(sourceLocale, "Machine")}</span>
                   <span className="text-foreground/80">{environmentLabel}</span>
                   {entry.projectPath && (
                     <>
-                      <span>Project</span>
+                      <span>{translateWebSource(sourceLocale, "Project")}</span>
                       <code className="text-foreground/80">{entry.projectPath}</code>
                     </>
                   )}
                   {entry.path && (
                     <>
-                      <span>Folder</span>
+                      <span>{translateWebSource(sourceLocale, "Folder")}</span>
                       <code className="text-foreground/80">{entry.path}</code>
                     </>
                   )}
                   {entry.threadTitle && (
                     <>
-                      <span>Thread</span>
+                      <span>{translateWebSource(sourceLocale, "Thread")}</span>
                       <span>{entry.threadTitle}</span>
                     </>
                   )}
@@ -258,7 +261,8 @@ function CleanupResults({
       )}
       {report.entries.length === 0 && report.omittedCount === 0 && (
         <p className="px-3 py-2.5 text-xs text-muted-foreground sm:px-4">
-          {environmentLabel}: Nothing needed cleanup.
+          {environmentLabel}
+          {translateWebSource(sourceLocale, ": Nothing needed cleanup.")}
         </p>
       )}
     </>

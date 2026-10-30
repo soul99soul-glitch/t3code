@@ -1,3 +1,5 @@
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 import { useAuth } from "@clerk/react";
 import { Link } from "@tanstack/react-router";
 
@@ -71,6 +73,7 @@ function BoringSidebarMultilineRow() {
 
 /** Signed out of T3 Connect, the row offers to sign in instead of its switch. */
 function GuestLinksRowWithSignIn() {
+  const { locale } = useI18n();
   const { isSignedIn } = useAuth();
   const { openAuthPrompt } = useT3ConnectAuthPrompt();
   // `isSignedIn` is undefined until Clerk loads.
@@ -81,7 +84,7 @@ function GuestLinksRowWithSignIn() {
       description="Share a thread with a guest who watches it live in their browser and sends messages you approve. Sign in to T3 Connect to use guest links."
       control={
         <Button size="sm" variant="outline" onClick={openAuthPrompt}>
-          Sign in
+          {translateWebSource(locale, "Sign in")}
         </Button>
       }
     />
@@ -89,6 +92,7 @@ function GuestLinksRowWithSignIn() {
 }
 
 function GuestLinksRow() {
+  const { locale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -98,12 +102,14 @@ function GuestLinksRow() {
       settingKeys={["guestSharingEnabled"]}
       description={
         <>
-          Share a thread with a guest who watches it live in their browser and sends messages you
-          approve. Needs T3 Connect: sign in and link this machine in{" "}
+          {translateWebSource(
+            locale,
+            "Share a thread with a guest who watches it live in their browser and sends messages you approve. Needs T3 Connect: sign in and link this machine in",
+          )}{" "}
           <Link to="/settings/access" className="underline underline-offset-2">
-            Sharing & access
+            {translateWebSource(locale, "Sharing & access")}
           </Link>
-          . While it is off, every guest link stops working.
+          {translateWebSource(locale, ". While it is off, every guest link stops working.")}
         </>
       }
       control={
@@ -111,7 +117,7 @@ function GuestLinksRow() {
           settingKeys={["guestSharingEnabled"]}
           checked={settings.guestSharingEnabled}
           onCheckedChange={(checked) => updateSettings({ guestSharingEnabled: Boolean(checked) })}
-          aria-label="Guest links"
+          aria-label={translateWebSource(locale, "Guest links")}
         />
       }
     />

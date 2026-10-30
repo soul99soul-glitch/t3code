@@ -22,6 +22,7 @@ import {
 
 import { cn } from "../../lib/utils";
 import { normalizeProviderAccentColor } from "../../providerInstances";
+import { useI18n, type WebTranslate } from "../../i18n/WebI18nContext";
 import { readEnvironmentScope, useEnvironmentScope } from "../../state/session";
 import { Button } from "../ui/button";
 import { ChatGptConnectionButton } from "./ChatGptConnectionButton";
@@ -81,13 +82,17 @@ const DRIVER_OPTIONS = providerClients.definitions.filter(
 const FEATURED_DRIVER_OPTIONS = DRIVER_OPTIONS.filter((option) => option.featured !== false);
 const MORE_DRIVER_OPTIONS = DRIVER_OPTIONS.filter((option) => option.featured === false);
 const EMPTY_CONFIG_DRAFT: Record<string, unknown> = {};
-function validateInstanceId(id: string, existing: ReadonlySet<string>): string | null {
-  if (id.length === 0) return "Instance ID is required.";
-  if (id.length > 64) return "Instance ID must be 64 characters or fewer.";
+function validateInstanceId(
+  id: string,
+  existing: ReadonlySet<string>,
+  t: WebTranslate,
+): string | null {
+  if (id.length === 0) return t("providers.add.validation.required");
+  if (id.length > 64) return t("providers.add.validation.tooLong");
   if (!INSTANCE_ID_PATTERN.test(id)) {
-    return "Instance ID must start with a letter and use only letters, digits, '-', or '_'.";
+    return t("providers.add.validation.pattern");
   }
-  if (existing.has(id)) return `An instance named '${id}' already exists.`;
+  if (existing.has(id)) return t("providers.add.validation.exists", { id });
   return null;
 }
 
@@ -159,6 +164,7 @@ export function AddProviderInstanceDialog({
   onOpenChange,
   onCreated,
 }: AddProviderInstanceDialogProps) {
+  const { t } = useI18n();
   const settings = useEnvironmentSettings(environmentId);
   const persistProviderInstance = usePersistEnvironmentProviderInstanceMutation(environmentId);
   const canManageProviders = useEnvironmentScope(environmentId, AuthProvidersManageScope);
@@ -217,10 +223,10 @@ export function AddProviderInstanceDialog({
       existingIds,
     );
   const driverSettingsFields = deriveProviderSettingsFields(driverOption);
-  const instanceIdError = validateInstanceId(instanceId, existingIds);
+  const instanceIdError = validateInstanceId(instanceId, existingIds, t);
   const showInstanceIdError = hasAttemptedSubmit && instanceIdError !== null;
   const identityStep = 1;
-  const previewLabel = label.trim() || `${driverOption.label} Workspace`;
+  const previewLabel = label.trim() || t("providers.add.workspace", { driver: driverOption.label });
 
   const configDraft = configByDriver[driver] ?? EMPTY_CONFIG_DRAFT;
   const isLocalAcp = isAcpRegistry && isManualAcpConfiguration && configDraft.source === "local";
@@ -392,8 +398,8 @@ export function AddProviderInstanceDialog({
       setIsSaving(false);
       toastManager.add({
         type: "error",
-        title: "Could not add provider instance",
-        description: error instanceof Error ? error.message : "The settings update failed.",
+        title: t("providers.add.toast.failed"),
+        description: error instanceof Error ? error.message : t("providers.add.toast.updateFailed"),
       });
       return;
     }
@@ -425,7 +431,7 @@ export function AddProviderInstanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <WizardPopup size="wide">
         <WizardHeader
-          title="Add provider"
+          title={t("providers.add.title")}
           description={<>Add an account or configure a provider on {environmentLabel}.</>}
         >
           {isAcpRegistry ? (

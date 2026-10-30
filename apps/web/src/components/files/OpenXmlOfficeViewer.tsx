@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { useStableCallback } from "~/hooks/useStableCallback";
 import type { OfficePreviewKind } from "@t3tools/shared/filePreview";
 import { lazy, Suspense, useEffect, useState } from "react";
@@ -39,6 +41,7 @@ export default function OfficeViewer(props: {
   readonly kind: Extract<OfficePreviewKind, "docx" | "xlsx" | "pptx">;
   readonly sizeBytes?: number;
 }) {
+  const { locale: previewLocale } = useI18n();
   const [error, setError] = useState<string | null>(null);
   const [prepared, setPrepared] = useState<Extract<OfficeWorkerResult, { bytes: ArrayBuffer }>>();
   const [details, setDetails] = useState("");
@@ -97,7 +100,9 @@ export default function OfficeViewer(props: {
         role="alert"
         className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 px-6 text-center"
       >
-        <p className="text-sm font-medium">No preview for this file</p>
+        <p className="text-sm font-medium">
+          {translateWebSource(previewLocale, "No preview for this file")}
+        </p>
         <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
           {error} Save it or open it in another app.
         </p>

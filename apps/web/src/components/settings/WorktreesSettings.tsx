@@ -1,3 +1,5 @@
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 import { DEFAULT_UNIFIED_SETTINGS } from "@t3tools/contracts/settings";
 
 import { AdvancedSettings } from "./AdvancedSettings";
@@ -16,6 +18,7 @@ import { WorktreeCleanupSection, WorktreesDirectoryRow } from "./StorageSettings
 import { useScopedSettings, useUpdateScopedSettings } from "./useScopedSettings";
 
 function StartFromRemoteRow() {
+  const { locale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -44,7 +47,7 @@ function StartFromRemoteRow() {
           onCheckedChange={(checked) =>
             updateSettings({ newWorktreesStartFromOrigin: Boolean(checked) })
           }
-          aria-label="Start new worktrees from remote by default"
+          aria-label={translateWebSource(locale, "Start new worktrees from remote by default")}
         />
       }
     />

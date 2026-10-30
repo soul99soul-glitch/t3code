@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
 
@@ -20,6 +22,7 @@ export function ProviderWizardAuthenticationStep({
   readonly instanceId: ProviderInstanceId;
   readonly onFinish: () => void;
 }) {
+  const { locale: sourceLocale } = useI18n();
   const providers =
     useAtomValue(serverEnvironment.providersValueAtom(environmentId)) ?? EMPTY_SERVER_PROVIDERS;
   const provider = providers.find((candidate) => candidate.instanceId === instanceId);
@@ -56,7 +59,7 @@ export function ProviderWizardAuthenticationStep({
             />
           ) : (
             <SettingsRow
-              title="Account"
+              title={translateWebSource(sourceLocale, "Account")}
               description={
                 isDiscovering
                   ? "Discovering sign-in methods…"
@@ -67,7 +70,7 @@ export function ProviderWizardAuthenticationStep({
               control={
                 isDiscovering ? (
                   <Button disabled size="sm" variant="outline">
-                    Sign in
+                    {translateWebSource(sourceLocale, "Sign in")}
                   </Button>
                 ) : provider?.setup?.documentationUrl ? (
                   <Button
@@ -77,7 +80,7 @@ export function ProviderWizardAuthenticationStep({
                       <a href={provider.setup.documentationUrl} target="_blank" rel="noreferrer" />
                     }
                   >
-                    Open docs
+                    {translateWebSource(sourceLocale, "Open docs")}
                   </Button>
                 ) : undefined
               }

@@ -1,6 +1,8 @@
+import { translateWebSource } from "~/i18n/messages";
 import { InfoIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
+import { useI18n } from "~/i18n/WebI18nContext";
 import { Button } from "../ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { ComposerBanner, type ComposerBannerVariant } from "./ComposerBanner";
@@ -58,6 +60,7 @@ export function NoticeText({
   readonly className: string;
   readonly detailsLabel: string;
 }) {
+  const { locale: releaseLocale } = useI18n();
   const textRef = useRef<HTMLSpanElement>(null);
   const detailsRef = useRef<HTMLButtonElement>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -110,7 +113,7 @@ export function NoticeText({
             <InfoIcon />
           </PopoverTrigger>
           <PopoverPopup
-            aria-label="Notice details"
+            aria-label={translateWebSource(releaseLocale, "Notice details")}
             tooltipStyle
             side="top"
             className="max-w-[min(30rem,calc(100vw-2rem))] whitespace-normal wrap-anywhere [--inline-button-text-align:start] [--inline-button-white-space:normal] [&_[data-slot=inline-button]]:max-w-full"
@@ -126,6 +129,7 @@ export function NoticeText({
 }
 
 function NoticeCard({ item }: { readonly item: ComposerBannerStackItem }) {
+  const { locale: releaseLocale, t } = useI18n();
   return (
     <ComposerBanner.Root
       role={item.variant === "error" || item.variant === "warning" ? "alert" : undefined}
@@ -141,8 +145,8 @@ function NoticeCard({ item }: { readonly item: ComposerBannerStackItem }) {
           <NoticeText
             detailsLabel={
               typeof item.title === "string"
-                ? `Show full title: ${item.title}`
-                : "Show title details"
+                ? `${translateWebSource(releaseLocale, "Show full title")}: ${item.title}`
+                : translateWebSource(releaseLocale, "Show title details")
             }
             className="min-w-0 truncate font-medium leading-7 sm:leading-6"
           >
@@ -152,8 +156,8 @@ function NoticeCard({ item }: { readonly item: ComposerBannerStackItem }) {
             <NoticeText
               detailsLabel={
                 typeof item.title === "string"
-                  ? `Show details: ${item.title}`
-                  : "Show notice details"
+                  ? `${translateWebSource(releaseLocale, "Show details")}: ${item.title}`
+                  : translateWebSource(releaseLocale, "Show notice details")
               }
               className="w-0 min-w-0 grow truncate text-muted-foreground @max-[400px]:sr-only"
             >
@@ -166,7 +170,7 @@ function NoticeCard({ item }: { readonly item: ComposerBannerStackItem }) {
             {item.actions}
             {item.onDismiss ? (
               <ComposerBanner.Dismiss
-                aria-label={item.dismissLabel ?? "Dismiss warning"}
+                aria-label={item.dismissLabel ?? t("composer.banner.dismissWarning")}
                 onClick={item.onDismiss}
               />
             ) : null}

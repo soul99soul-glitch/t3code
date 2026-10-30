@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import {
   DndContext,
   type DragEndEvent,
@@ -43,6 +45,7 @@ export function EnvironmentRoutesList({
   readonly environment: EnvironmentPresentation;
   readonly onAddRoute: () => void;
 }) {
+  const { locale: sourceLocale } = useI18n();
   const saved = connectionRoutes(environment.entry);
   const savedIds = saved.map((route) => connectionRouteId(route.target));
   const [pending, setPending] = useState<ReadonlyArray<string> | null>(null);
@@ -119,7 +122,7 @@ export function EnvironmentRoutesList({
       <div className="-ml-1.5 pt-1">
         <Button size="xs" variant="ghost-muted" onClick={onAddRoute}>
           <PlusIcon className="size-3" />
-          Add route
+          {translateWebSource(sourceLocale, "Add route")}
         </Button>
       </div>
     </div>
@@ -139,6 +142,7 @@ function SortableRouteRow({
   readonly removable: boolean;
   readonly onRemove: () => void;
 }) {
+  const { locale: sourceLocale } = useI18n();
   const id = connectionRouteId(route.target);
   const label = connectionRouteLabel(route);
   const address = connectionRouteAddress(route);
@@ -166,7 +170,7 @@ function SortableRouteRow({
           {label}
           {inUse ? (
             <span className="rounded-sm bg-success/12 px-1 text-2xs font-normal text-success-foreground">
-              In use
+              {translateWebSource(sourceLocale, "In use")}
             </span>
           ) : null}
         </p>
@@ -202,7 +206,7 @@ function SortableRouteRow({
           >
             <XIcon className="size-3" />
           </TooltipTrigger>
-          <TooltipPopup side="top">Remove route</TooltipPopup>
+          <TooltipPopup side="top">{translateWebSource(sourceLocale, "Remove route")}</TooltipPopup>
         </Tooltip>
       ) : null}
     </li>

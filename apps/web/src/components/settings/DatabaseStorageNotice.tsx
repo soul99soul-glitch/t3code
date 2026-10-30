@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
@@ -16,6 +18,8 @@ export function DatabaseStorageNotice({
 }: {
   environments: ReadonlyArray<{ readonly environmentId: EnvironmentId; readonly label: string }>;
 }) {
+  const { locale: sourceLocale } = useI18n();
+
   const recommendations = useAtomValue(
     serverEnvironment.databaseCompactionRecommendations(
       JSON.stringify(environments.map((environment) => environment.environmentId)),
@@ -52,7 +56,7 @@ export function DatabaseStorageNotice({
                 size="xs"
                 onClick={() => copyToClipboard(status.compactCommand, undefined)}
               >
-                Copy command
+                {translateWebSource(sourceLocale, "Copy command")}
               </Button>
               <Button
                 variant="ghost"

@@ -99,6 +99,8 @@ import { Dialog } from "../ui/dialog";
 import { toastManager } from "../ui/toast";
 import { cn } from "../../lib/utils";
 import { formatRelativeTime } from "../../timestampFormat";
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 
 type WizardStep = "connection" | "agents" | "import";
 const NO_ENVIRONMENTS: readonly EnvironmentId[] = [];
@@ -106,6 +108,12 @@ const NO_ENVIRONMENTS: readonly EnvironmentId[] = [];
 const AGENT_ONBOARDING_THREAD_ID = ThreadId.make("onboarding-agent-setup");
 const ONBOARDING_STAGES = ["Connect", "Agents", "Projects"] as const;
 const SCAN_LIMIT_MESSAGE = "Scan limit reached. Some projects or conversations may be missing.";
+
+function useWelcomeTranslation() {
+  const { locale, t } = useI18n();
+  const translate = (source: string) => translateWebSource(locale, source);
+  return { locale, t, translate };
+}
 
 export function WelcomeWizard({
   localAvailable,
@@ -116,6 +124,8 @@ export function WelcomeWizard({
   readonly resumeEnvironmentId?: EnvironmentId | undefined;
   readonly onDone: (projectRef?: ScopedProjectRef) => void | Promise<void>;
 }) {
+  const { locale: releaseLocale } = useI18n();
+  const { translate } = useWelcomeTranslation();
   const [step, setStep] = useState<WizardStep>(resumeEnvironmentId ? "agents" : "connection");
   const { environments } = useEnvironments();
   const [selection, setSelection] = useState<ReadonlySet<EnvironmentId> | null>(null);
@@ -182,14 +192,14 @@ export function WelcomeWizard({
         if (importWarning) {
           toastManager.add({
             type: "warning",
-            title: "Some history was not imported",
+            title: translateWebSource(releaseLocale, "Some history was not imported"),
             description: importWarning,
             timeout: 0,
           });
         } else if (importedThreadCount > 0) {
           toastManager.add({
             type: "success",
-            title: `Imported ${importedThreadCount} ${importedThreadCount === 1 ? "thread" : "threads"}`,
+            title: `Imported ${importedThreadCount} ${importedThreadCount === 1 ? translateWebSource(releaseLocale, "thread") : translateWebSource(releaseLocale, "threads")}`,
           });
         }
         return true;
@@ -197,8 +207,8 @@ export function WelcomeWizard({
       .catch(() => {
         const errorToast = {
           type: "error",
-          title: "Could not finish setup",
-          description: "Your settings could not be saved. Try again.",
+          title: translate("Could not finish setup"),
+          description: translate("Your settings could not be saved. Try again."),
         } as const;
         if (completionErrorToastIdRef.current === null) {
           completionErrorToastIdRef.current = toastManager.add(errorToast);
@@ -231,18 +241,18 @@ export function WelcomeWizard({
         initialFocus={() => document.getElementById("onboarding-pairing-url") ?? true}
       >
         <WizardHeader
-          title="Set up T3 Code"
+          title={translate("Set up T3 Code")}
           identity={
             <div className="flex items-baseline gap-1.5" role="img" aria-label="T3 Code">
               <T3Wordmark className="h-4 w-auto shrink-0" aria-hidden />
               <span className="text-2xl font-medium tracking-tight text-muted-foreground">
-                Code
+                {translateWebSource(releaseLocale, "Code")}
               </span>
             </div>
           }
         >
           <WizardSteps
-            steps={ONBOARDING_STAGES}
+            steps={ONBOARDING_STAGES.map(translate)}
             currentStep={stageIndex}
             isStepDisabled={(index) => isImporting || index >= stageIndex}
             onStepChange={(index) => {
@@ -308,6 +318,9 @@ function ConnectionStep({
   readonly onContinue: () => void;
   readonly onPaired: (environmentId: EnvironmentId) => void;
 }) {
+  const { locale: newCopyLocale } = useI18n();
+  const { t: translateRelease } = useI18n();
+  const { translate } = useWelcomeTranslation();
   const { environments } = useEnvironments();
   const cloudEnabled = hasCloudPublicConfig();
   const directEnvironments = environments.filter(
@@ -333,14 +346,16 @@ function ConnectionStep({
   return (
     <>
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        Connect your computers
+        {translate("Connect your computers")}
       </h1>
       <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
-        Choose one or more computers. We’ll set up agents and projects on each.
+        {translate(
+          translate("Choose one or more computers. We’ll set up agents and projects on each."),
+        )}
       </p>
       {directEnvironments.length > 0 ? (
         <fieldset className="mt-5 space-y-2">
-          <legend className="sr-only">Computers to set up</legend>
+          <legend className="sr-only">{translate("Computers to set up")}</legend>
           {directEnvironments.map((environment) => (
             <label
               key={environment.environmentId}
@@ -363,7 +378,7 @@ function ConnectionStep({
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {!environment.entry.enabled && environment.connection.phase !== "unsupported"
-                      ? "Off"
+                      ? translateRelease("connections.wsl.off")
                       : presentSavedCloudEnvironmentConnection(environment.connection).buttonLabel}
                   </span>
                 </span>
@@ -404,7 +419,7 @@ function ConnectionStep({
               }
             >
               <LinkIcon className="size-4 text-muted-foreground" />
-              <span className="flex-1 text-left">Add a computer</span>
+              <span className="flex-1 text-left">{translate("Add a computer")}</span>
               <ChevronRightIcon
                 className={cn("size-4 text-muted-foreground", pairingOpen && "rotate-90")}
               />
@@ -433,8 +448,10 @@ function ConnectionStep({
       ) : null}
       <div className="mt-6 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <p className="min-w-0 text-xs leading-relaxed text-muted-foreground">
-          T3 Code collects anonymous usage data to help us improve it. To read more about how your
-          data is used and how to opt out, see our{" "}
+          {translateWebSource(
+            newCopyLocale,
+            "T3 Code collects anonymous usage data to help us improve it. To read more about how your data is used and how to opt out, see our",
+          )}{" "}
           <a
             className="underline underline-offset-2 hover:text-foreground"
             href={PRIVACY_POLICY_URL}
@@ -452,7 +469,7 @@ function ConnectionStep({
           disabled={!ready || isPairing}
           onClick={onContinue}
         >
-          Continue
+          {translate("Continue")}
           <ArrowRightIcon className="size-3.5" />
         </Button>
       </div>
@@ -471,6 +488,7 @@ function ConnectAccountOption({
   readonly selectedIds: ReadonlySet<EnvironmentId>;
   readonly onToggleEnvironment: (environmentId: EnvironmentId, checked: boolean) => void;
 }) {
+  const { translate } = useWelcomeTranslation();
   const { environments } = useEnvironments();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { openAuthPrompt } = useT3ConnectAuthPrompt();
@@ -498,11 +516,11 @@ function ConnectAccountOption({
           <span className="flex-1 text-left">T3 Connect</span>
           <span className="text-xs text-muted-foreground">
             {!isLoaded
-              ? "Loading sign-in…"
+              ? translate("Loading sign-in…")
               : !isSignedIn
-                ? "Sign in"
+                ? translate("Sign in")
                 : !discoveryReady
-                  ? "Loading computers…"
+                  ? translate("Loading computers…")
                   : null}
           </span>
           <ChevronRightIcon
@@ -521,17 +539,21 @@ function ConnectAccountOption({
                   selection={{ selectedIds, onChange: onToggleEnvironment, autoSelectedComputers }}
                   refreshWhileEmpty
                   empty={
-                    <p className="py-3 text-sm text-muted-foreground">No computers linked yet.</p>
+                    <p className="py-3 text-sm text-muted-foreground">
+                      {translate("No computers linked yet.")}
+                    </p>
                   }
                 />
               ) : null}
             </div>
             <p className="text-sm text-muted-foreground">
-              Run this on each computer you want to connect.
+              {translate("Run this on each computer you want to connect.")}
             </p>
             <CommandBlock command="npx t3 connect" className="mt-3" />
             <p className="mt-3 text-xs text-muted-foreground">
-              Keep T3 Code running. Select the computers you want to set up above.
+              {translate(
+                translate("Keep T3 Code running. Select the computers you want to set up above."),
+              )}
             </p>
           </div>
         </CollapsiblePanel>
@@ -549,6 +571,8 @@ function PairingForm({
   readonly setIsPairing: (value: boolean) => void;
   readonly onPaired: (environmentId: EnvironmentId) => void;
 }) {
+  const { t: translateRelease, locale: releaseLocale } = useI18n();
+  const { translate } = useWelcomeTranslation();
   const connectPairingEnvironment = useAtomCommand(connectPairing, { reportFailure: false });
   const [pairingUrl, setPairingUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -575,7 +599,7 @@ function PairingForm({
     }
     if (isAtomCommandInterrupted(result)) return;
     const cause = squashAtomCommandFailure(result);
-    setErrorMessage(cause instanceof Error ? cause.message : "Pairing failed.");
+    setErrorMessage(cause instanceof Error ? cause.message : translate("Pairing failed."));
   };
 
   return (
@@ -589,7 +613,7 @@ function PairingForm({
       >
         <div>
           <label className="block text-sm text-muted-foreground" htmlFor="onboarding-pairing-url">
-            Pairing link
+            {translate("Pairing link")}
           </label>
           <Input
             id="onboarding-pairing-url"
@@ -629,20 +653,25 @@ function PairingForm({
               className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ChevronRightIcon className="size-3.5 group-data-panel-open:rotate-90" />
-              Need a pairing link?
+              {translate("Need a pairing link?")}
             </CollapsibleTrigger>
             <Button type="submit" disabled={isPairing || pairingUrl.trim().length === 0}>
-              {isPairing ? "Pairing..." : "Pair"}
+              {translate(
+                isPairing
+                  ? translateRelease("pairing.submitting")
+                  : translateWebSource(releaseLocale, "Pair"),
+              )}
             </Button>
           </div>
           <CollapsiblePanel>
             <p className="pt-3 text-sm text-muted-foreground">
-              Run this on the computer with your code.
+              {translate("Run this on the computer with your code.")}{" "}
             </p>
             <CommandBlock command="npx t3 pair" className="mt-2" />
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Start T3 Code first, or run <code className="font-mono">npx t3 serve</code>. Add{" "}
-              <code className="font-mono">--tailscale</code> to use your tailnet.
+              {translate("Start T3 Code first, or run")}{" "}
+              <code className="font-mono">npx t3 serve</code>.{" "}
+              {translate("Add --tailscale to use your tailnet.")}
             </p>
           </CollapsiblePanel>
         </Collapsible>
@@ -670,11 +699,16 @@ function AgentsStep({
   readonly environmentIds: readonly EnvironmentId[];
   readonly onContinue: () => void;
 }) {
+  const { locale: uiLocale } = useI18n();
+  const { translate } = useWelcomeTranslation();
   const { environments } = useEnvironments();
   return (
     <StepShell
-      title="Connect your agents"
-      description="Choose an agent to start coding. You can add more later."
+      title={translateWebSource(uiLocale, "Connect your agents")}
+      description={translateWebSource(
+        uiLocale,
+        "Choose an agent to start coding. You can add more later.",
+      )}
     >
       <ScrollArea scrollFade className="mt-5 h-auto max-h-[min(32rem,55dvh)]">
         <div className="space-y-5 pr-3">
@@ -684,7 +718,7 @@ function AgentsStep({
               environmentId={environmentId}
               machineLabel={
                 environments.find((environment) => environment.environmentId === environmentId)
-                  ?.label ?? "Computer"
+                  ?.label ?? translate("Computer")
               }
             />
           ))}
@@ -692,7 +726,7 @@ function AgentsStep({
       </ScrollArea>
       <div className="mt-6 flex justify-end">
         <Button autoFocus onClick={onContinue}>
-          Continue
+          {translate("Continue")}
           <ArrowRightIcon className="size-3.5" />
         </Button>
       </div>
@@ -707,6 +741,7 @@ function ConnectedAgentsStep({
   readonly environmentId: EnvironmentId;
   readonly machineLabel: string;
 }) {
+  const { locale: uiLocale } = useI18n();
   const providers = useAtomValue(serverEnvironment.providersValueAtom(environmentId));
   const refreshProviders = useAtomCommand(serverEnvironment.refreshProviders, {
     reportFailure: false,
@@ -753,7 +788,7 @@ function ConnectedAgentsStep({
       <h2 className="mb-2 text-sm font-medium">{machineLabel}</h2>
       {!canOperateTerminal ? (
         <p className="mb-2 text-sm text-muted-foreground">
-          This connection cannot control terminals.
+          {translateWebSource(uiLocale, "This connection cannot control terminals.")}
         </p>
       ) : null}
       <div className="space-y-1.5">
@@ -836,7 +871,7 @@ function ConnectedAgentsStep({
       ) ? (
         <div className="mt-3">
           <Button size="xs" variant="ghost-muted" onClick={() => setAddingAccount(true)}>
-            Connect another ChatGPT account
+            {translateWebSource(uiLocale, "Connect another ChatGPT account")}
           </Button>
         </div>
       ) : null}
@@ -961,6 +996,8 @@ function AgentCard({
   readonly terminalAvailable: boolean;
   readonly onOpenTerminal: () => void;
 }) {
+  const { locale: uiLocale } = useI18n();
+  const { translate } = useWelcomeTranslation();
   const meta = providerClients.get(ProviderDriverKind.make(driver));
   const displayName =
     provider?.displayName || (driver === "claudeAgent" ? "Claude Code" : (meta?.label ?? driver));
@@ -977,22 +1014,24 @@ function AgentCard({
       <div className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-foreground">{displayName}</span>
         <p className="mt-0.5 text-xs leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
-          {providerState === "ready" ? "Ready to code." : summary.headline}
-          {providerState !== "ready" && summary.detail ? ` · ${summary.detail}` : ""}
+          {providerState === "ready"
+            ? translateWebSource(uiLocale, "Ready to code.")
+            : translate(summary.headline)}
+          {providerState !== "ready" && summary.detail ? ` · ${translate(summary.detail)}` : ""}
         </p>
       </div>
       <div className="shrink-0">
         {providerState === "ready" ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success-foreground">
             <CheckIcon className="size-3.5" />
-            Ready
+            {translate("Ready")}
           </span>
         ) : providerState === "checking" ? (
-          <span className="text-xs text-muted-foreground">Checking...</span>
+          <span className="text-xs text-muted-foreground">{translate("Checking...")}</span>
         ) : providerState === "disabled" ? (
-          <span className="text-xs text-muted-foreground">Disabled</span>
+          <span className="text-xs text-muted-foreground">{translate("Disabled")}</span>
         ) : providerState === "attention" ? (
-          <span className="text-xs text-muted-foreground">{summary.headline}</span>
+          <span className="text-xs text-muted-foreground">{translate(summary.headline)}</span>
         ) : (
           <Button
             size="xs"
@@ -1001,7 +1040,7 @@ function AgentCard({
             disabled={terminalOpen || !terminalAvailable}
           >
             <TerminalIcon className="size-3.5" />
-            {providerState === "signIn" ? "Sign in" : "Install"}
+            {translate(providerState === "signIn" ? translate("Sign in") : translate("Install"))}
           </Button>
         )}
       </div>
@@ -1016,6 +1055,8 @@ function AgentInstallTerminal({
   readonly session: AgentTerminalSession;
   readonly onClose: () => void;
 }) {
+  const { locale: uiLocale } = useI18n();
+  const { locale, translate } = useWelcomeTranslation();
   const { command, cwd, driver, environmentId, keybindings, providerInstanceId } = session;
   const canOperateTerminal = useEnvironmentScope(environmentId, AuthTerminalOperateScope);
   const [advancedTypography] = useLocalStorage(
@@ -1115,18 +1156,26 @@ function AgentInstallTerminal({
       <div className="flex items-center justify-between border-b border-border/60 bg-background/60 px-3 py-1.5">
         <span className="text-2xs font-medium text-muted-foreground">
           {!canOperateTerminal ? (
-            "This connection cannot control terminals."
+            translate("This connection cannot control terminals.")
           ) : setupState === "writeFailed" ? (
-            <>
-              Run <code className="rounded bg-muted px-1 font-mono">{command}</code> in this
-              terminal.
-            </>
+            locale === "zh-CN" ? (
+              <>
+                请在此终端中运行 <code className="rounded bg-muted px-1 font-mono">{command}</code>
+                。
+              </>
+            ) : (
+              <>
+                {translateWebSource(uiLocale, "Run")}{" "}
+                <code className="rounded bg-muted px-1 font-mono">{command}</code>{" "}
+                {translateWebSource(uiLocale, "in this terminal.")}
+              </>
+            )
           ) : setupState === "ready" ? (
-            "Review the command, then press Enter to run it."
+            translate("Review the command, then press Enter to run it.")
           ) : setupState === "openFailed" ? (
-            "Could not open the setup terminal."
+            translate("Could not open the setup terminal.")
           ) : (
-            "Preparing command..."
+            translate("Preparing command...")
           )}
         </span>
         <div className="flex items-center gap-1">
@@ -1141,11 +1190,11 @@ function AgentInstallTerminal({
                 }
               }}
             >
-              Retry
+              {translate("Retry")}
             </Button>
           ) : null}
           <Button size="xs" variant="ghost-muted" onClick={onClose}>
-            Close
+            {translate("Close")}
           </Button>
         </div>
       </div>
@@ -1155,7 +1204,7 @@ function AgentInstallTerminal({
             threadRef={threadRef}
             threadId={AGENT_ONBOARDING_THREAD_ID}
             terminalId={terminalId}
-            terminalLabel={`Install ${driver}`}
+            terminalLabel={`${translate("Install")} ${driver}`}
             cwd={cwd}
             providerInstanceId={providerInstanceId}
             advancedTypography={advancedTypography}
@@ -1187,6 +1236,8 @@ function ImportStep({
     importedThreadCount?: number,
   ) => Promise<boolean>;
 }) {
+  const { locale: uiLocale } = useI18n();
+  const { locale, translate } = useWelcomeTranslation();
   const { environments } = useEnvironments();
   const writableEnvironments = useEnvironmentsWithScope(scans, AuthOrchestrationOperateScope);
   const createProject = useAtomCommand(projectEnvironment.create, { reportFailure: false });
@@ -1384,13 +1435,22 @@ function ImportStep({
     importedThreadCountRef.current = importedThreadCount;
     if (importedProjectsCount < selection.length) {
       if (importedThreadCount > 0 && skippedThreadCount > 0) {
-        importWarningRef.current = `Imported ${importedThreadCount} ${importedThreadCount === 1 ? "thread" : "threads"}. ${skippedThreadCount} ${skippedThreadCount === 1 ? "thread" : "threads"} could not be imported.`;
+        importWarningRef.current =
+          locale === "zh-CN"
+            ? `已导入 ${importedThreadCount} 个任务，另有 ${skippedThreadCount} 个任务无法导入。`
+            : `Imported ${importedThreadCount} ${importedThreadCount === 1 ? translateWebSource(uiLocale, "thread") : translateWebSource(uiLocale, "threads")}. ${skippedThreadCount} ${skippedThreadCount === 1 ? translateWebSource(uiLocale, "thread") : translateWebSource(uiLocale, "threads")} could not be imported.`;
       } else if (skippedThreadCount > 0) {
-        importWarningRef.current = `${skippedThreadCount} ${skippedThreadCount === 1 ? "thread could" : "threads could"} not be imported.`;
+        importWarningRef.current =
+          locale === "zh-CN"
+            ? `${skippedThreadCount} 个任务无法导入。`
+            : `${skippedThreadCount} ${skippedThreadCount === 1 ? "thread could" : "threads could"} not be imported.`;
       } else if (importedThreadCount > 0) {
-        importWarningRef.current = `Imported ${importedThreadCount} ${importedThreadCount === 1 ? "thread" : "threads"}. Some thread history could not be imported.`;
+        importWarningRef.current =
+          locale === "zh-CN"
+            ? `已导入 ${importedThreadCount} 个任务，部分任务历史无法导入。`
+            : `Imported ${importedThreadCount} ${importedThreadCount === 1 ? translateWebSource(uiLocale, "thread") : translateWebSource(uiLocale, "threads")}. Some thread history could not be imported.`;
       } else {
-        importWarningRef.current = "Could not import thread history.";
+        importWarningRef.current = translate("Could not import thread history.");
       }
     }
     finishAfterImport();
@@ -1399,16 +1459,18 @@ function ImportStep({
   if (scans.every((scan) => scan.data === null) && scans.some((scan) => scan.isPending)) {
     return (
       <div className="flex h-full min-h-40 flex-col">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Your projects</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {translate("Your projects")}
+        </h1>
         <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
           <Spinner size="lg" tone="muted" />
           <p className="text-center text-sm text-muted-foreground">
-            Looking for projects from Claude Code and Codex…
+            {translate("Looking for projects from Claude Code and Codex…")}
           </p>
         </div>
         <div className="flex justify-end">
           <Button variant="ghost-muted" onClick={() => void onDone()}>
-            Do not import projects
+            {translate("Do not import projects")}
           </Button>
         </div>
       </div>
@@ -1417,13 +1479,17 @@ function ImportStep({
 
   return (
     <StepShell
-      title="Import your projects"
-      description="Import projects and conversations from Claude Code and Codex on your selected computers."
+      title={translateWebSource(uiLocale, "Import your projects")}
+      description={translateWebSource(
+        uiLocale,
+        "Import projects and conversations from Claude Code and Codex on your selected computers.",
+      )}
     >
       {candidates.length > 0 ? (
         <div className="mt-5 flex items-center justify-between gap-3 text-xs text-muted-foreground">
           <span role="status">
-            {selected.length} of {candidates.length} selected
+            {selected.length} {translateWebSource(uiLocale, "of")} {candidates.length}{" "}
+            {translateWebSource(uiLocale, "selected")}
           </span>
           <div className="flex items-center gap-1">
             <Button
@@ -1432,7 +1498,7 @@ function ImportStep({
               disabled={isImporting || selected.length === candidates.length}
               onClick={() => setSelectedPaths(new Set(candidates.map((item) => item.key)))}
             >
-              Select all
+              {translateWebSource(uiLocale, "Select all")}
             </Button>
             <Button
               variant="ghost"
@@ -1440,7 +1506,7 @@ function ImportStep({
               disabled={isImporting || selected.length === 0}
               onClick={() => setSelectedPaths(new Set())}
             >
-              Select none
+              {translateWebSource(uiLocale, "Select none")}
             </Button>
           </div>
         </div>
@@ -1453,7 +1519,7 @@ function ImportStep({
             );
             const label =
               environments.find((environment) => environment.environmentId === scan.environmentId)
-                ?.label ?? "Computer";
+                ?.label ?? translate("Computer");
             return (
               <fieldset
                 key={scan.environmentId}
@@ -1466,26 +1532,28 @@ function ImportStep({
                 {scan.isPending && scan.data === null ? (
                   <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
                     <Spinner size="md" />
-                    Looking for projects…
+                    {translate("Looking for projects…")}{" "}
                   </div>
                 ) : scan.error !== null ? (
                   <div
                     role="alert"
                     className="flex items-center justify-between gap-3 text-sm text-muted-foreground"
                   >
-                    <span>Could not check projects. {scan.error}</span>
+                    <span>
+                      {translate("Could not check projects.")} {scan.error}
+                    </span>
                     <Button variant="ghost" size="sm" onClick={scan.refresh}>
-                      Retry
+                      {translate("Retry")}
                     </Button>
                   </div>
                 ) : scanCandidates.length === 0 ? (
                   <p className="py-2 text-sm text-muted-foreground">
-                    No existing Claude Code or Codex projects found.
+                    {translate("No existing Claude Code or Codex projects found.")}
                   </p>
                 ) : null}
                 {scan.data?.truncated ? (
                   <p className="text-xs text-muted-foreground" role="status">
-                    {SCAN_LIMIT_MESSAGE}
+                    {translate(SCAN_LIMIT_MESSAGE)}
                   </p>
                 ) : null}
                 <ImportCandidateList
@@ -1503,7 +1571,7 @@ function ImportStep({
       ) : null}
       <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
         <Button variant="ghost-muted" disabled={isImporting} onClick={finishAfterImport}>
-          Do not import projects
+          {translate("Do not import projects")}
         </Button>
         <Button
           autoFocus
@@ -1511,8 +1579,10 @@ function ImportStep({
           onClick={() => void runImport(selected)}
         >
           {isImporting
-            ? "Importing…"
-            : `Import ${selected.length} ${selected.length === 1 ? "project" : "projects"}`}
+            ? translate("Importing…")
+            : locale === "zh-CN"
+              ? `导入 ${selected.length} 个项目`
+              : `Import ${selected.length} ${selected.length === 1 ? "project" : "projects"}`}
         </Button>
       </div>
     </StepShell>
@@ -1533,6 +1603,7 @@ function ImportCandidateList({
   readonly selectedKeys: ReadonlySet<string>;
   readonly onSelectionChange: (next: ReadonlySet<string>) => void;
 }) {
+  const { locale: uiLocale } = useI18n();
   const { repositories, other } = groupOnboardingProjects(candidates);
   const setKeys = (keys: ReadonlyArray<string>, checked: boolean) => {
     const next = new Set(selectedKeys);
@@ -1569,7 +1640,9 @@ function ImportCandidateList({
             />
             <CollapsibleTrigger className="group flex min-w-0 flex-1 items-center gap-1.5 text-left">
               <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-panel-open:rotate-90" />
-              <span className="truncate text-sm text-muted-foreground">Other folders</span>
+              <span className="truncate text-sm text-muted-foreground">
+                {translateWebSource(uiLocale, "Other folders")}
+              </span>
               <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">
                 {other.length} {other.length === 1 ? "folder" : "folders"}
               </span>
@@ -1724,8 +1797,14 @@ function ImportRowMeta({
   readonly threadCount: number;
   readonly lastActiveAt: string | null;
 }) {
+  const { t: translateRelease } = useI18n();
   const relative = lastActiveAt === null ? null : formatRelativeTime(lastActiveAt);
-  const age = relative === null ? "" : relative.suffix === null ? "now" : relative.value;
+  const age =
+    relative === null
+      ? ""
+      : relative.suffix === null
+        ? translateRelease("composer.tasks.now")
+        : relative.value;
   return (
     <span className="ml-auto grid shrink-0 grid-cols-[1rem_1rem_2.5rem_2.25rem] items-center gap-x-1 text-xs text-muted-foreground tabular-nums">
       <span className="flex size-4 items-center justify-center">
@@ -1765,11 +1844,14 @@ function StepShell({
   readonly description?: string;
   readonly children?: React.ReactNode;
 }) {
+  const { translate } = useWelcomeTranslation();
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">{translate(title)}</h1>
       {description ? (
-        <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+          {translate(description)}
+        </p>
       ) : null}
       {children}
     </>

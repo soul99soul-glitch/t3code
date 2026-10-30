@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 /* oxlint-disable react/no-array-index-key -- Read-only cells retain their database row and column positions. */
 import {
   decodeFilePreviewText,
@@ -36,6 +38,7 @@ type Database = Extract<BinaryWorkerResult, { type: "sqlite" }>;
 type Rows = Extract<BinaryWorkerResult, { type: "rows" }>;
 
 function ArchiveFile(props: { readonly path: string; readonly bytes: Uint8Array<ArrayBuffer> }) {
+  const { locale: previewLocale } = useI18n();
   const [url, setUrl] = useState<string | null>(null);
   const kind = filePreviewKind({ name: props.path });
   const text = (() => {
@@ -68,7 +71,9 @@ function ArchiveFile(props: { readonly path: string; readonly bytes: Uint8Array<
   return (
     <>
       {text.truncated ? (
-        <FileSurfaceNotice>Preview limited to the first 1 MB.</FileSurfaceNotice>
+        <FileSurfaceNotice>
+          {translateWebSource(previewLocale, "Preview limited to the first 1 MB.")}
+        </FileSurfaceNotice>
       ) : null}
       <Suspense fallback={<FileSurfaceLoading />}>
         <SourcePreview name={props.path} text={text.text} />
@@ -83,6 +88,7 @@ export default function BinaryViewer(props: {
   readonly kind: "archive" | "sqlite";
   readonly onRetry?: () => void;
 }) {
+  const { locale: previewLocale } = useI18n();
   const [sizeBytes, setSizeBytes] = useState<number | null>(null);
   const [archive, setArchive] = useState<Archive | null>(null);
   const [database, setDatabase] = useState<Database | null>(null);
@@ -225,7 +231,12 @@ export default function BinaryViewer(props: {
                   if (!busy && value !== null) selectPage(0, value);
                 }}
               >
-                <SelectTrigger aria-label="Table" aria-disabled={busy} aria-busy={busy} size="xs">
+                <SelectTrigger
+                  aria-label={translateWebSource(previewLocale, "Table")}
+                  aria-disabled={busy}
+                  aria-busy={busy}
+                  size="xs"
+                >
                   <SelectValue>
                     {table.name} ({table.count.toLocaleString()} rows)
                   </SelectValue>
@@ -240,7 +251,7 @@ export default function BinaryViewer(props: {
               </Select>
             </div>
             <FileSurfaceAction
-              label="Previous rows"
+              label={translateWebSource(previewLocale, "Previous rows")}
               disabled={busy || page === 0}
               onPress={() => selectPage(page - 1)}
             >
@@ -252,7 +263,7 @@ export default function BinaryViewer(props: {
                 : `${page * SQLITE_PAGE_SIZE + 1}–${Math.min(table.count, (page + 1) * SQLITE_PAGE_SIZE)} of ${table.count.toLocaleString()}`}
             </span>
             <FileSurfaceAction
-              label="Next rows"
+              label={translateWebSource(previewLocale, "Next rows")}
               disabled={busy || (page + 1) * SQLITE_PAGE_SIZE >= table.count}
               onPress={() => selectPage(page + 1)}
             >
@@ -285,7 +296,7 @@ export default function BinaryViewer(props: {
       ) : archive ? (
         <div className="scrollbar-gutter-both min-h-0 flex-1 overflow-auto">
           <table
-            aria-label="Archive entries"
+            aria-label={translateWebSource(previewLocale, "Archive entries")}
             className="w-full border-separate border-spacing-0 text-xs"
           >
             <thead className="sticky top-0 bg-background text-muted-foreground">
@@ -344,7 +355,9 @@ export default function BinaryViewer(props: {
             </tbody>
           </table>
           {children.size === 0 ? (
-            <p className="p-6 text-xs text-muted-foreground">This folder is empty.</p>
+            <p className="p-6 text-xs text-muted-foreground">
+              {translateWebSource(previewLocale, "This folder is empty.")}
+            </p>
           ) : null}
         </div>
       ) : rows ? (
@@ -382,11 +395,15 @@ export default function BinaryViewer(props: {
             </tbody>
           </table>
           {rows.rows.length === 0 ? (
-            <p className="p-6 text-xs text-muted-foreground">This table is empty.</p>
+            <p className="p-6 text-xs text-muted-foreground">
+              {translateWebSource(previewLocale, "This table is empty.")}
+            </p>
           ) : null}
         </div>
       ) : (
-        <p className="p-6 text-xs text-muted-foreground">This database has no readable tables.</p>
+        <p className="p-6 text-xs text-muted-foreground">
+          {translateWebSource(previewLocale, "This database has no readable tables.")}
+        </p>
       )}
     </div>
   );

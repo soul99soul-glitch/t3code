@@ -1,9 +1,11 @@
+import { translateWebSource } from "~/i18n/messages";
 import { useAtomCommand } from "~/state/use-atom-command";
 import { capitalizeTerm } from "@t3tools/client-runtime/source-control-clients";
 import type { EnvironmentId, PullRequestRef, PullRequestReviewVerdict } from "@t3tools/contracts";
 import { CheckIcon, MessageSquareIcon, XCircleIcon } from "lucide-react";
 import { useState, type ReactNode, type RefObject } from "react";
 
+import { useI18n } from "~/i18n/WebI18nContext";
 import { pullRequestEnvironment } from "~/state/pullRequests";
 
 import { Button } from "../ui/button";
@@ -64,6 +66,16 @@ export function PullRequestReviewForm({
   onPendingChange: (pending: boolean) => void;
   onSubmitted: () => void;
 }) {
+  const { locale: uiLocale } = useI18n();
+  const { t } = useI18n();
+  const verdictLabel = (value: PullRequestReviewVerdict) =>
+    t(
+      value === "approve"
+        ? "pullRequests.review.approve"
+        : value === "request-changes"
+          ? "pullRequests.review.requestChanges"
+          : "pullRequests.comments.comment",
+    );
   const [requestedVerdict, setRequestedVerdict] = useState<PullRequestReviewVerdict>("comment");
   const comments = usePendingReviewComments(reference);
   const reviewKey = pullRequestReviewKey(reference);
@@ -95,7 +107,7 @@ export function PullRequestReviewForm({
     });
     onPendingChange(false);
     if (result._tag === "Failure") {
-      toastManager.add({ type: "error", title: "The review could not be submitted" });
+      toastManager.add({ type: "error", title: t("pullRequests.review.submitFailed") });
       return;
     }
     // Preserve comments and summary edits made during submission.
@@ -104,7 +116,17 @@ export function PullRequestReviewForm({
       submittedComments.map((comment) => comment.id),
     );
     clearSummary(reviewKey, submittedBody);
-    toastManager.add({ type: "success", title: verdict.sent(term) });
+    toastManager.add({
+      type: "success",
+      title:
+        uiLocale === "zh-CN"
+          ? verdict.value === "approve"
+            ? "变更请求已批准"
+            : verdict.value === "request-changes"
+              ? "已请求修改"
+              : "评审已提交"
+          : verdict.sent(term),
+    });
     onSubmitted();
   };
 
@@ -126,8 +148,8 @@ export function PullRequestReviewForm({
         ref={textareaRef}
         rows={3}
         value={body}
-        placeholder={placeholder}
-        aria-label="Review summary"
+        placeholder={translateWebSource(uiLocale, placeholder)}
+        aria-label={t("pullRequests.review.summaryAria")}
         onChange={(event) => setSummary(reviewKey, event.target.value)}
       />
       <div className="mt-2 flex justify-end gap-2">
@@ -139,10 +161,14 @@ export function PullRequestReviewForm({
               if (value !== null) setRequestedVerdict(value);
             }}
           >
-            <SelectTrigger size="xs" className="mr-auto w-auto min-w-0" aria-label="Review verdict">
+            <SelectTrigger
+              size="xs"
+              className="mr-auto w-auto min-w-0"
+              aria-label={translateWebSource(uiLocale, "Review verdict")}
+            >
               <span className="flex items-center gap-1.5">
                 {selectedVerdict?.icon}
-                {selectedVerdict?.label}
+                {selectedVerdict ? verdictLabel(selectedVerdict.value) : null}
               </span>
             </SelectTrigger>
             <SelectPopup side="top" alignItemWithTrigger={false}>
@@ -150,7 +176,7 @@ export function PullRequestReviewForm({
                 <SelectItem key={verdict.value} value={verdict.value}>
                   <span className="flex items-center gap-1.5">
                     {verdict.icon}
-                    {verdict.label}
+                    {verdictLabel(verdict.value)}
                   </span>
                 </SelectItem>
               ))}
@@ -166,7 +192,9 @@ export function PullRequestReviewForm({
             if (selectedVerdict !== undefined) void submit(selectedVerdict);
           }}
         >
-          {pending ? "Submitting..." : "Submit review"}
+          {pending
+            ? t("composer.action.submitting")
+            : translateWebSource(uiLocale, "Submit review")}
         </Button>
       </div>
     </>

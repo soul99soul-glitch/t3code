@@ -11,6 +11,8 @@ import { Switch } from "../ui/switch";
 import { EnvironmentRow, environmentTransportLabel } from "./EnvironmentRow";
 import { FoldedSettingsSection } from "./FoldedSettingsSection";
 import { searchableSetting } from "./settingsSearch";
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 
 const preferences = [
   { value: 100, label: "Prefer" },
@@ -49,6 +51,8 @@ export function LoadBalancingSettings({
 }: {
   environments: ReadonlyArray<EnvironmentPresentation>;
 }) {
+  const { locale } = useI18n();
+  const translate = (source: string) => translateWebSource(locale, source);
   const settings = useClientSettings((current) => ({
     loadBalancingEnabled: current.loadBalancingEnabled,
     loadBalancingWeights: current.loadBalancingWeights,
@@ -69,7 +73,7 @@ export function LoadBalancingSettings({
       }
       control={
         <Switch
-          aria-label="Automatically balance load"
+          aria-label={translate(translate("Automatically balance load"))}
           checked={settings.loadBalancingEnabled}
           disabled={!settingsHydrated}
           onCheckedChange={(loadBalancingEnabled) => updateClientSettings({ loadBalancingEnabled })}

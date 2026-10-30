@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import type {
   ModelSelection,
   ProviderInstanceId,
@@ -40,6 +42,7 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
   onToggleInteractionMode: () => void;
   onRuntimeModeChange: (mode: RuntimeMode) => void;
 }) {
+  const { locale: releaseLocale, t: translateRelease } = useI18n();
   const size = props.size ?? "sm";
   const accessDisplay = props.accessDisplay ?? "label";
   const composerFloatingLayerProps = useComposerMenuProps();
@@ -51,8 +54,8 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
   const RuntimeModeIcon = runtimeModeOption.icon;
   const interactionModeTooltip =
     props.interactionMode === "plan"
-      ? "Plan mode. Click to return to normal build mode"
-      : "Default mode. Click to enter plan mode";
+      ? translateWebSource(releaseLocale, "Plan mode: click to return to normal build mode")
+      : translateWebSource(releaseLocale, "Default mode: click to enter plan mode");
 
   const interactionModeToggle = props.showInteractionModeToggle ? (
     <Tooltip>
@@ -86,7 +89,9 @@ export const ComposerFooterModeControls = memo(function ComposerFooterModeContro
           data-composer-control-label
           className={size === "xs" ? "sr-only" : "sr-only sm:not-sr-only"}
         >
-          {props.interactionMode === "plan" ? "Plan" : "Build"}
+          {props.interactionMode === "plan"
+            ? translateRelease("composer.controls.plan")
+            : translateRelease("projectAction.icon.build")}
         </span>
       </TooltipTrigger>
       <TooltipPopup side="top">{interactionModeTooltip}</TooltipPopup>

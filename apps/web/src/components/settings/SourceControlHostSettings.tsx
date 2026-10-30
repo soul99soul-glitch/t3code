@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import type { EnvironmentId } from "@t3tools/contracts";
 import type { SourceControlDefinition } from "@t3tools/client-runtime/source-control-clients";
 import { useState } from "react";
@@ -19,6 +21,7 @@ export function SourceControlHostSettings({
   };
   readonly onSaved: () => void;
 }) {
+  const { locale: sourceLocale } = useI18n();
   const saved = useEnvironmentSettings(
     environmentId,
     (settings) => settings.sourceControlHosts[definition.kind],
@@ -66,7 +69,7 @@ export function SourceControlHostSettings({
               void save(Object.fromEntries(Object.keys(saved ?? {}).map((key) => [key, ""])))
             }
           >
-            Remove
+            {translateWebSource(sourceLocale, "Remove")}
           </Button>
         </div>
       ) : null}

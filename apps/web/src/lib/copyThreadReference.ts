@@ -6,8 +6,11 @@ import {
 
 import { stackedThreadToast, toastManager } from "../components/ui/toast";
 import { writeTextToClipboard } from "../hooks/useCopyToClipboard";
+import { readWebI18n } from "../i18n/readWebI18n";
+import { translateWebSource } from "../i18n/messages";
 
 export async function copyThreadReference(target: ThreadReferenceCopyTarget): Promise<void> {
+  const { locale, t } = readWebI18n();
   const fragment = target.fragment ? encodeComposerContextFragment(target.fragment) : null;
   try {
     const didCopy = await writeTextToClipboard(
@@ -18,7 +21,7 @@ export async function copyThreadReference(target: ThreadReferenceCopyTarget): Pr
     if (!didCopy) return;
     toastManager.add({
       type: "success",
-      title: target.successTitle,
+      title: translateWebSource(locale, target.successTitle),
       description: target.description,
     });
   } catch (error) {
@@ -26,8 +29,8 @@ export async function copyThreadReference(target: ThreadReferenceCopyTarget): Pr
     toastManager.add(
       stackedThreadToast({
         type: "error",
-        title: target.failureTitle,
-        description: error instanceof Error ? error.message : "An error occurred.",
+        title: translateWebSource(locale, target.failureTitle),
+        description: error instanceof Error ? error.message : t("common.error"),
       }),
     );
   }

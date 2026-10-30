@@ -49,6 +49,12 @@ import {
 } from "./providerInstance.ts";
 import { PullRequestMergeMethod } from "./pullRequest.ts";
 
+// ── Client Settings (local-only) ───────────────────────────────
+
+export const AppLocalePreference = Schema.Literals(["system", "en", "zh-CN"]);
+export type AppLocalePreference = typeof AppLocalePreference.Type;
+export const DEFAULT_APP_LOCALE_PREFERENCE: AppLocalePreference = "system";
+
 export const TimestampFormat = Schema.Literals(["locale", "12-hour", "24-hour"]);
 export type TimestampFormat = typeof TimestampFormat.Type;
 const DEFAULT_TIMESTAMP_FORMAT: TimestampFormat = "locale";
@@ -348,6 +354,9 @@ export type ModelPreferences = {
 };
 
 export const ClientSettingsSchema = Schema.Struct({
+  appLocale: AppLocalePreference.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_APP_LOCALE_PREFERENCE)),
+  ),
   notificationMode: NotificationMode.pipe(
     Schema.withDecodingDefault(Effect.succeed("off" as const)),
   ),
@@ -1671,6 +1680,7 @@ export function requiredScopesForProjectMutation(
 }
 
 export const ClientSettingsPatch = Schema.Struct({
+  appLocale: Schema.optionalKey(AppLocalePreference),
   notificationMode: Schema.optionalKey(NotificationMode),
   inAppNotificationsEnabled: Schema.optionalKey(Schema.Boolean),
   diffColorScheme: Schema.optionalKey(DiffColorScheme),

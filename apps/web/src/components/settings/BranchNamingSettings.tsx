@@ -1,3 +1,5 @@
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import { useRef } from "react";
 import { BranchNamingMode, DEFAULT_SERVER_SETTINGS } from "@t3tools/contracts";
 
@@ -20,6 +22,7 @@ const MODES = {
 } satisfies Record<BranchNamingMode, string>;
 
 export function BranchNamingSettings() {
+  const { locale: sourceLocale } = useI18n();
   const settings = useScopedSettings();
   const { targets } = useSettingsScope();
   const scopeKey = targets.map((target) => `${target.environmentId}:${target.projectId}`).join(",");
@@ -36,7 +39,10 @@ export function BranchNamingSettings() {
         serverScoped
         settingKeys={["branchNamingMode"]}
         {...searchableSetting("worktree-branch-naming")}
-        description="Choose how new worktree branches are named from your first message."
+        description={translateWebSource(
+          sourceLocale,
+          "Choose how new worktree branches are named from your first message.",
+        )}
         status={
           !modeMixed && settings.branchNamingMode === "semantic"
             ? "The model chooses a prefix that describes the work, such as feat/add-search, fix/login-timeout, or refactor/auth."
@@ -45,7 +51,7 @@ export function BranchNamingSettings() {
         resetAction={
           settings.branchNamingMode !== DEFAULT_SERVER_SETTINGS.branchNamingMode || modeMixed ? (
             <SettingResetButton
-              label="branch naming"
+              label={translateWebSource(sourceLocale, "branch naming")}
               onClick={() =>
                 updateSettings({ branchNamingMode: DEFAULT_SERVER_SETTINGS.branchNamingMode })
               }
@@ -61,7 +67,10 @@ export function BranchNamingSettings() {
               }
             }}
           >
-            <SelectTrigger size="sm" aria-label="Worktree branch naming">
+            <SelectTrigger
+              size="sm"
+              aria-label={translateWebSource(sourceLocale, "Worktree branch naming")}
+            >
               <SelectValue>
                 {(value: BranchNamingMode | null) => (value === null ? "Mixed" : MODES[value])}
               </SelectValue>
@@ -80,13 +89,16 @@ export function BranchNamingSettings() {
         <SettingsRow
           serverScoped
           settingKeys={["branchNamePrefix"]}
-          title="Branch prefix"
-          description="For example, t3 or t3/ produces t3/add-search. Leave empty for no prefix."
+          title={translateWebSource(sourceLocale, "Branch prefix")}
+          description={translateWebSource(
+            sourceLocale,
+            "For example, t3 or t3/ produces t3/add-search. Leave empty for no prefix.",
+          )}
           resetAction={
             prefixMixed ||
             settings.branchNamePrefix !== DEFAULT_SERVER_SETTINGS.branchNamePrefix ? (
               <SettingResetButton
-                label="branch prefix"
+                label={translateWebSource(sourceLocale, "branch prefix")}
                 onClick={() =>
                   updateSettings({ branchNamePrefix: DEFAULT_SERVER_SETTINGS.branchNamePrefix })
                 }
@@ -96,7 +108,7 @@ export function BranchNamingSettings() {
           control={
             <Input
               key={`${scopeKey}:${prefixMixed}:${settings.branchNamePrefix}`}
-              aria-label="Branch prefix"
+              aria-label={translateWebSource(sourceLocale, "Branch prefix")}
               autoCapitalize="none"
               spellCheck={false}
               onChange={() => {
@@ -118,12 +130,15 @@ export function BranchNamingSettings() {
         <SettingsRow
           serverScoped
           settingKeys={["branchNameInstructions"]}
-          title="Branch naming instructions"
-          description="Appended to the naming prompt. The model returns the complete branch name; no prefix or suffix is added."
+          title={translateWebSource(sourceLocale, "Branch naming instructions")}
+          description={translateWebSource(
+            sourceLocale,
+            "Appended to the naming prompt. The model returns the complete branch name; no prefix or suffix is added.",
+          )}
           resetAction={
             instructionsMixed || settings.branchNameInstructions !== "" ? (
               <SettingResetButton
-                label="branch naming instructions"
+                label={translateWebSource(sourceLocale, "branch naming instructions")}
                 onClick={() => updateSettings({ branchNameInstructions: "" })}
               />
             ) : null
@@ -132,7 +147,7 @@ export function BranchNamingSettings() {
           <div className="mt-3 max-w-2xl pb-3.5">
             <Textarea
               key={`${scopeKey}:${instructionsMixed}:${settings.branchNameInstructions}`}
-              aria-label="Branch naming instructions"
+              aria-label={translateWebSource(sourceLocale, "Branch naming instructions")}
               onChange={() => {
                 instructionsEdited.current = true;
               }}

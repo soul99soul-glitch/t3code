@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -23,6 +25,7 @@ export function PreviewFileNotShown({
   downloadUrl: string | null;
   onOpen: () => void;
 }) {
+  const { locale: newCopyLocale } = useI18n();
   const host = safeHost(url) ?? url;
   return (
     <div className="scrollbar-gutter-both relative flex h-full min-h-0 w-full overflow-y-auto bg-background">
@@ -32,8 +35,8 @@ export function PreviewFileNotShown({
           This file can&rsquo;t be shown here
         </h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          <span className="font-semibold text-foreground">{fileName}</span> from {host} was
-          downloaded instead.
+          <span className="font-semibold text-foreground">{fileName}</span> from {host}{" "}
+          {translateWebSource(newCopyLocale, "was downloaded instead.")}
         </p>
         <div className="mt-auto flex items-center gap-2 pt-8">
           <div className="flex-1" />

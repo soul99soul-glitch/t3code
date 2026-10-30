@@ -1,3 +1,4 @@
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import {
   EasDeviceHostConfig,
   type EasDeviceHostConfig as EasDeviceHostConfigType,
@@ -16,7 +17,6 @@ export const newEasDeviceHost = (id: string): EasDeviceHostConfigType => ({
   maxConcurrentSessions: 2,
 });
 
-/** Adds, replaces, or removes one EAS host. */
 /**
  * With `keepToken`, the environment keeps the token it holds: a saved token arrives redacted, and
  * one environment's token says nothing about another's. One new to the host uses its own Expo login.
@@ -35,7 +35,9 @@ export function updateEasDeviceHosts(
     : [...hosts, next];
 }
 
-export function easSessionLimits(host: EasDeviceHostConfigType) {
+export function easSessionLimits(host: EasDeviceHostConfigType, locale: ResolvedAppLocale = "en") {
+  if (locale === "zh-CN")
+    return `最多同时运行 ${host.maxConcurrentSessions} 个会话，每个会话在 ${host.maxSessionMinutes} 分钟后或空闲 ${host.idleMinutes} 分钟后停止`;
   const sessions =
     host.maxConcurrentSessions === 1 ? "1 session" : `${host.maxConcurrentSessions} sessions`;
   return `Up to ${sessions} at once, each stopped after ${host.maxSessionMinutes} min or ${host.idleMinutes} idle min`;

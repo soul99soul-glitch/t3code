@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { DeviceHostUpdates } from "./DeviceHostUpdates";
 import type {
   DevicePlatform,
@@ -48,6 +50,7 @@ export function DevicePanel(props: {
   readonly visible: boolean;
   readonly onDismissSetup: () => void;
 }) {
+  const { locale: newCopyLocale } = useI18n();
   const { environmentId, threadId } = props.threadRef;
   const { state, loaded } = useDeviceState(environmentId);
   const list = useAtomCommand(deviceEnvironment.list, { reportFailure: false });
@@ -340,8 +343,10 @@ export function DevicePanel(props: {
                 !state.devices.some((device) => device.platform === "android") &&
                 !unavailablePlatforms.some((platform) => platform.platform === "android") ? (
                   <p className="max-w-sm text-xs">
-                    No Android virtual devices found. Create one in Android Studio's Device Manager,
-                    then refresh.
+                    {translateWebSource(
+                      newCopyLocale,
+                      "No Android virtual devices found. Create one in Android Studio's Device Manager, then refresh.",
+                    )}
                   </p>
                 ) : null}
                 {loaded && !hostBusy ? (
@@ -398,11 +403,15 @@ function DeviceNotice(props: {
 }
 
 function DeviceDiscoveryWarning(props: { readonly label: string; readonly detail: string }) {
+  const { locale: newCopyLocale } = useI18n();
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
   return (
     <DeviceNotice tone="warning" onDismiss={() => setDismissed(true)}>
-      <p className="font-medium">Device discovery warning · {props.label}</p>
+      <p className="font-medium">
+        {translateWebSource(newCopyLocale, "Device discovery warning ·")}
+        {props.label}
+      </p>
       {props.detail}
     </DeviceNotice>
   );

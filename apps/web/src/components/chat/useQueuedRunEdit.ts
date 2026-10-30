@@ -1,3 +1,7 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource, translateWebMessage } from "~/i18n/messages";
+
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { useAtomValue } from "@effect/atom-react";
 import {
   makeQueuedRunEditStore,
@@ -85,13 +89,14 @@ function queuedEditDraftTarget(routeThreadRef: ScopedThreadRef, runId: RunId) {
 }
 
 async function submitQueuedRunEdit(input: {
+  readonly locale: ResolvedAppLocale;
   readonly environmentId: EnvironmentId;
   readonly draftTarget: ComposerThreadTarget;
   readonly editing: EditingQueuedRun;
   readonly content: QueuedRunEditContent;
   readonly editQueuedRun: ReturnType<typeof useEditQueuedRunCommand>;
 }): Promise<string | null> {
-  const { environmentId, draftTarget, editing, content } = input;
+  const { environmentId, draftTarget, editing, content, locale } = input;
   const editText = content.prompt.trim();
   const newAttachments = [...content.images, ...content.files];
   const uploadFiles = async (files: ReadonlyArray<ComposerFileAttachment>) => {
@@ -111,7 +116,8 @@ async function submitQueuedRunEdit(input: {
     await awaitAttachmentUploads(files.map((file) => file.id));
     validateFiles();
     const uploaded = getUploadedAttachments({ environmentId, images: files });
-    if (uploaded === null) throw new Error("Retry or remove failed uploads before saving.");
+    if (uploaded === null)
+      throw new Error(translateWebSource(locale, "Retry or remove failed uploads before saving."));
     return uploaded;
   };
   try {
@@ -163,9 +169,13 @@ async function submitQueuedRunEdit(input: {
         },
       },
     });
-    return result._tag === "Failure" ? "Could not save the edited queued message." : null;
+    return result._tag === "Failure"
+      ? translateWebSource(locale, "Could not save the edited queued message.")
+      : null;
   } catch (error) {
-    return error instanceof Error ? error.message : "Could not save the edited queued message.";
+    return error instanceof Error
+      ? error.message
+      : translateWebSource(locale, "Could not save the edited queued message.");
   }
 }
 
@@ -183,6 +193,7 @@ export function useQueuedRunEdit(input: {
   readonly promptRef: { current: string };
   readonly composerRef: RefObject<ChatComposerHandle | null>;
 }) {
+  const { t, locale } = useI18n();
   const {
     environmentId,
     routeThreadRef,
@@ -266,15 +277,18 @@ export function useQueuedRunEdit(input: {
           const title = appAtomRegistry.get(
             environmentThreadShells.threadShellAtom(threadRef),
           )?.title;
-          const where = title === undefined ? "" : ` in “${title}”`;
+          const where =
+            title === undefined
+              ? ""
+              : translateWebMessage(locale, "chat.queuedEdit.threadSuffix", { title });
           toastManager.add(
             stackedThreadToast({
               type: recovery === "kept" ? "info" : "warning",
-              title: "Queued message is no longer queued",
+              title: translateWebSource(locale, "Queued message is no longer queued"),
               description:
                 recovery === "kept"
-                  ? `Your unsaved edit${where} was kept in the composer.`
-                  : `Your unsaved edit${where} was discarded.`,
+                  ? translateWebMessage(locale, "chat.queuedEdit.recovered", { where })
+                  : translateWebMessage(locale, "chat.queuedEdit.discarded", { where }),
             }),
           );
         },
@@ -309,7 +323,7 @@ export function useQueuedRunEdit(input: {
     ) {
       setThreadError(
         editing.threadId,
-        `A message can have at most ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} attachments.`,
+        t("chat.queuedEdit.tooManyAttachments", { count: PROVIDER_SEND_TURN_MAX_ATTACHMENTS }),
       );
       return;
     }
@@ -324,6 +338,7 @@ export function useQueuedRunEdit(input: {
     const finishSave = queuedRunEdits.startSave(editKey);
     if (finishSave === null) return;
     const error = await submitQueuedRunEdit({
+      locale,
       environmentId,
       draftTarget,
       editing,

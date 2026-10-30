@@ -1,3 +1,4 @@
+import { translateWebSource } from "~/i18n/messages";
 import { Spinner } from "~/components/ui/spinner";
 import type {
   PullRequestActor,
@@ -23,6 +24,7 @@ import {
 import { Children, type CSSProperties, isValidElement, type ReactNode, useState } from "react";
 
 import { cn } from "~/lib/utils";
+import { useI18n, type WebTranslate } from "../../i18n/WebI18nContext";
 
 import { Badge } from "../ui/badge";
 import { InlineButton } from "../ui/button";
@@ -89,14 +91,16 @@ export function PullRequestReviewDecisionGlyph({
 }: {
   decision: PullRequestReviewDecision;
 }) {
+  const { locale } = useI18n();
   const presentation = reviewDecisionPresentation(decision);
+  const label = translateWebSource(locale, presentation.label);
   return (
     <Tooltip>
       <TooltipTrigger render={<span className="inline-flex shrink-0" />}>
         <presentation.Icon aria-hidden className={cn("size-3.5", presentation.toneClassName)} />
-        <span className="sr-only">{presentation.label}</span>
+        <span className="sr-only">{label}</span>
       </TooltipTrigger>
-      <TooltipPopup>{presentation.label}</TooltipPopup>
+      <TooltipPopup>{label}</TooltipPopup>
     </Tooltip>
   );
 }
@@ -104,9 +108,13 @@ export function PullRequestReviewDecisionGlyph({
 export function resolvePullRequestState(input: {
   readonly state: PullRequestState;
   readonly isDraft: boolean;
+  readonly t?: WebTranslate;
 }): PullRequestStatePresentation {
   const key = input.state === "open" && input.isDraft ? "draft" : input.state;
-  return PULL_REQUEST_STATE_PRESENTATION[key];
+  return {
+    ...PULL_REQUEST_STATE_PRESENTATION[key],
+    label: input.t?.(`pullRequests.state.${key}`) ?? PULL_REQUEST_STATE_PRESENTATION[key].label,
+  };
 }
 
 export interface PullRequestConflictPresentation {
@@ -120,12 +128,16 @@ function resolvePullRequestConflict(input: {
   readonly isDraft: boolean;
   readonly mergeability?: PullRequestMergeability;
   readonly baseBranch?: string;
+  readonly t?: WebTranslate;
 }): PullRequestConflictPresentation | null {
   if (input.state !== "open" || input.isDraft || input.mergeability !== "conflicting") {
     return null;
   }
   return {
-    label: input.baseBranch ? `Conflicts with ${input.baseBranch}` : "Has conflicts",
+    label: input.baseBranch
+      ? (input.t?.("pullRequests.state.conflictsWith", { branch: input.baseBranch }) ??
+        `Conflicts with ${input.baseBranch}`)
+      : (input.t?.("pullRequests.state.conflicts") ?? "Has conflicts"),
     toneClassName: "text-destructive",
     Icon: PullRequestGlyph.conflicting,
   };
@@ -140,7 +152,8 @@ export function PullRequestStateGlyph({
   isDraft: boolean;
   className?: string;
 }) {
-  const presentation = resolvePullRequestState({ state, isDraft });
+  const { t } = useI18n();
+  const presentation = resolvePullRequestState({ state, isDraft, t });
   return (
     <Tooltip>
       <TooltipTrigger render={<span className="inline-flex shrink-0" />}>
@@ -168,7 +181,9 @@ export function PullRequestConflictGlyph({
   baseBranch?: string;
   className?: string;
 }) {
+  const { t } = useI18n();
   const presentation = resolvePullRequestConflict({
+    t,
     state,
     isDraft,
     ...(mergeability === undefined ? {} : { mergeability }),
@@ -220,10 +235,27 @@ function isWorkflowApprovalCheck(check: Pick<PullRequestCheck, "status" | "url">
 
 export function pullRequestCheckStatusLabel(
   check: Pick<PullRequestCheck, "status" | "url">,
+  t?: WebTranslate,
 ): string {
-  return isWorkflowApprovalCheck(check)
-    ? "Awaiting approval"
-    : CHECK_STATUS_PRESENTATION[check.status].label;
+  if (isWorkflowApprovalCheck(check)) {
+    return t?.("pullRequests.checks.status.awaitingApproval") ?? "Awaiting approval";
+  }
+  if (!t) return CHECK_STATUS_PRESENTATION[check.status].label;
+  const key =
+    check.status === "pending"
+      ? "pullRequests.checks.status.running"
+      : check.status === "action-required"
+        ? "pullRequests.checks.status.awaitingAction"
+        : check.status === "success"
+          ? "pullRequests.checks.status.passed"
+          : check.status === "failure"
+            ? "pullRequests.checks.status.failed"
+            : check.status === "cancelled"
+              ? "pullRequests.checks.status.cancelled"
+              : check.status === "skipped"
+                ? "pullRequests.checks.status.skipped"
+                : "pullRequests.checks.status.neutral";
+  return t(key);
 }
 
 export function PullRequestCheckStatusIcon({ status }: { status: PullRequestCheckStatus }) {
@@ -257,8 +289,21 @@ const CHECKS_STATE_PRESENTATION = {
   { label: string; Icon: typeof CircleCheckIcon; toneClassName: string }
 >;
 
-export function pullRequestChecksStatePresentation(state: PullRequestChecksState) {
-  return CHECKS_STATE_PRESENTATION[state];
+export function pullRequestChecksStatePresentation(
+  state: PullRequestChecksState,
+  t?: WebTranslate,
+) {
+  const presentation = CHECKS_STATE_PRESENTATION[state];
+  if (!t) return presentation;
+  return {
+    ...presentation,
+    label:
+      state === "passing"
+        ? t("pullRequests.checks.allPassed")
+        : state === "failing"
+          ? t("pullRequests.checks.someFailed")
+          : t("pullRequests.checks.somePending"),
+  };
 }
 
 export function pullRequestChecksState(
@@ -327,8 +372,16 @@ export function pullRequestReviewOutcomeRingClassName(
   return stale ? presentation.staleRingClassName : presentation.ringClassName;
 }
 
-export function pullRequestReviewOutcomeStaleLabel(outcome: PullRequestReviewOutcome): string {
-  return `${REVIEW_OUTCOME_PRESENTATION[outcome].label} earlier changes`;
+export function pullRequestReviewOutcomeStaleLabel(
+  outcome: PullRequestReviewOutcome,
+  t?: WebTranslate,
+): string {
+  if (!t) return `${REVIEW_OUTCOME_PRESENTATION[outcome].label} earlier changes`;
+  return outcome === "approved"
+    ? t("pullRequests.review.approvedEarlier")
+    : outcome === "changes-requested"
+      ? t("pullRequests.review.changesRequestedEarlier")
+      : t("pullRequests.review.dismissedEarlier");
 }
 
 export function PullRequestReviewOutcomeIcon({
@@ -369,8 +422,16 @@ export function PullRequestReviewOutcomeAvatarBadge({
   );
 }
 
-export function pullRequestReviewOutcomeLabel(outcome: PullRequestReviewOutcome): string {
-  return REVIEW_OUTCOME_PRESENTATION[outcome].label;
+export function pullRequestReviewOutcomeLabel(
+  outcome: PullRequestReviewOutcome,
+  t?: WebTranslate,
+): string {
+  if (!t) return REVIEW_OUTCOME_PRESENTATION[outcome].label;
+  return outcome === "approved"
+    ? t("pullRequests.review.approved")
+    : outcome === "changes-requested"
+      ? t("pullRequests.review.changesRequested")
+      : t("pullRequests.review.dismissed");
 }
 
 export function PullRequestReviewOutcomeBadge({
@@ -380,12 +441,13 @@ export function PullRequestReviewOutcomeBadge({
   outcome: PullRequestReviewOutcome;
   className?: string;
 }) {
+  const { t } = useI18n();
   const presentation = REVIEW_OUTCOME_PRESENTATION[outcome];
   return (
     <Badge size="sm" variant={presentation.badgeVariant} className={className}>
       <span className="inline-flex items-baseline gap-1">
         <presentation.Icon aria-hidden className="size-3 self-center" />
-        <span>{presentation.label}</span>
+        <span>{pullRequestReviewOutcomeLabel(outcome, t)}</span>
       </span>
     </Badge>
   );
@@ -530,8 +592,11 @@ export function PullRequestMetaLine({
   );
 }
 
-export function summarizePullRequestChecks(checks: ReadonlyArray<PullRequestCheck>): string {
-  if (checks.length === 0) return "No checks reported";
+export function summarizePullRequestChecks(
+  checks: ReadonlyArray<PullRequestCheck>,
+  t?: WebTranslate,
+): string {
+  if (checks.length === 0) return t?.("pullRequests.checks.nonePlain") ?? "No checks reported";
   const actionRequired = checks.filter((check) => check.status === "action-required");
   const workflowApprovalRequired = actionRequired.filter(isWorkflowApprovalCheck).length;
   const otherActionRequired = actionRequired.length - workflowApprovalRequired;
@@ -540,16 +605,43 @@ export function summarizePullRequestChecks(checks: ReadonlyArray<PullRequestChec
   ).length;
   const pending = checks.filter((check) => check.status === "pending").length;
   const passed = checks.filter((check) => check.status === "success").length;
-  if (failed > 0) return `${failed} of ${checks.length} failing`;
+  if (failed > 0) {
+    return (
+      t?.("pullRequests.checks.failingCount", { failed, total: checks.length }) ??
+      `${failed} of ${checks.length} failing`
+    );
+  }
   if (workflowApprovalRequired > 0 && otherActionRequired > 0) {
-    return `${workflowApprovalRequired} ${workflowApprovalRequired === 1 ? "workflow" : "workflows"} and ${otherActionRequired} ${otherActionRequired === 1 ? "check" : "checks"} awaiting action`;
+    return (
+      t?.("pullRequests.checks.workflowsAndChecksAwaiting", {
+        workflows: workflowApprovalRequired,
+        checks: otherActionRequired,
+      }) ??
+      `${workflowApprovalRequired} ${workflowApprovalRequired === 1 ? "workflow" : "workflows"} and ${otherActionRequired} ${otherActionRequired === 1 ? "check" : "checks"} awaiting action`
+    );
   }
   if (workflowApprovalRequired > 0) {
-    return `${workflowApprovalRequired} ${workflowApprovalRequired === 1 ? "workflow" : "workflows"} awaiting approval`;
+    return (
+      t?.("pullRequests.checks.workflowsAwaitingApproval", {
+        count: workflowApprovalRequired,
+      }) ??
+      `${workflowApprovalRequired} ${workflowApprovalRequired === 1 ? "workflow" : "workflows"} awaiting approval`
+    );
   }
   if (otherActionRequired > 0) {
-    return `${otherActionRequired} ${otherActionRequired === 1 ? "check" : "checks"} awaiting action`;
+    return (
+      t?.("pullRequests.checks.checksAwaitingAction", { count: otherActionRequired }) ??
+      `${otherActionRequired} ${otherActionRequired === 1 ? "check" : "checks"} awaiting action`
+    );
   }
-  if (pending > 0) return `${pending} of ${checks.length} running`;
-  return passed === checks.length ? "All checks passed" : `${passed} of ${checks.length} passing`;
+  if (pending > 0) {
+    return (
+      t?.("pullRequests.checks.runningCount", { pending, total: checks.length }) ??
+      `${pending} of ${checks.length} running`
+    );
+  }
+  return passed === checks.length
+    ? (t?.("pullRequests.checks.allPassedShort") ?? "All checks passed")
+    : (t?.("pullRequests.checks.passingCount", { passed, total: checks.length }) ??
+        `${passed} of ${checks.length} passing`);
 }

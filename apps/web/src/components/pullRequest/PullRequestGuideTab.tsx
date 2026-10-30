@@ -1,3 +1,5 @@
+import { translateWebSource } from "~/i18n/messages";
+import { useI18n } from "~/i18n/WebI18nContext";
 import type { EnvironmentId, PullRequestRef, PullRequestReviewGuideStop } from "@t3tools/contracts";
 import { SparklesIcon, TriangleAlertIcon } from "lucide-react";
 import { useEffect, useEffectEvent } from "react";
@@ -47,6 +49,7 @@ export function PullRequestGuideTab({
   onOpenFile: (path: string) => void;
   onTourShown?: (() => void) | undefined;
 }) {
+  const { locale: uiLocale } = useI18n();
   const { query, data, running, canWrite, write } = useReviewGuideWriter({
     environmentId,
     reference,
@@ -91,7 +94,7 @@ export function PullRequestGuideTab({
     canWrite ? (
       <Button size={size} variant="outline" disabled={running} onClick={() => void write()}>
         {running ? <Spinner /> : <SparklesIcon aria-hidden className="size-3.5" />}
-        {running ? "Reading the change..." : label}
+        {running ? translateWebSource(uiLocale, "Reading the change...") : label}
       </Button>
     ) : null;
 
@@ -106,16 +109,29 @@ export function PullRequestGuideTab({
     return (
       <div className="flex min-h-48 flex-col items-center justify-center gap-2 px-4 py-10 text-center">
         <p className="text-sm font-medium text-foreground">
-          {running ? "Writing a review guide" : "No review guide yet"}
+          {running
+            ? translateWebSource(uiLocale, "Writing a review guide")
+            : translateWebSource(uiLocale, "No review guide yet")}
         </p>
         <p className="max-w-md text-xs text-muted-foreground">
           {failure ??
             query.error ??
             (running
-              ? "An agent is reading the change. A large one takes a few minutes. You can leave; you will be told when it is ready."
-              : "A guide is a tour of the change: stops through the code in reading order, with the calls only a maintainer can make.")}
+              ? translateWebSource(
+                  uiLocale,
+                  "An agent is reading the change. A large one takes a few minutes. You can leave; you will be told when it is ready.",
+                )
+              : translateWebSource(
+                  uiLocale,
+                  "A guide is a tour of the change: stops through the code in reading order, with the calls only a maintainer can make.",
+                ))}
         </p>
-        {writeButton(failure === null ? "Write guide" : "Try again", "sm")}
+        {writeButton(
+          failure === null
+            ? translateWebSource(uiLocale, "Write guide")
+            : translateWebSource(uiLocale, "Try again"),
+          "sm",
+        )}
       </div>
     );
   }
@@ -126,10 +142,15 @@ export function PullRequestGuideTab({
         {running ? <Spinner /> : <TriangleAlertIcon />}
         <AlertDescription>
           {running
-            ? "Rewriting this guide. You will be told when the new one is ready."
-            : (failure ?? "Written before the latest push.")}
+            ? translateWebSource(
+                uiLocale,
+                "Rewriting this guide. You will be told when the new one is ready.",
+              )
+            : (failure ?? translateWebSource(uiLocale, "Written before the latest push."))}
         </AlertDescription>
-        {!running && canWrite ? <AlertAction>{writeButton("Rewrite", "xs")}</AlertAction> : null}
+        {!running && canWrite ? (
+          <AlertAction>{writeButton(translateWebSource(uiLocale, "Rewrite"), "xs")}</AlertAction>
+        ) : null}
       </Alert>
     ) : null;
 

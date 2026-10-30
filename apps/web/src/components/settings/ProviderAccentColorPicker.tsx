@@ -7,6 +7,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { normalizeProviderAccentColor } from "../../providerInstances";
+import { useI18n } from "../../i18n/WebI18nContext";
 
 const FALLBACK_ACCENT_COLOR = "#2563eb";
 
@@ -15,6 +16,7 @@ function ProviderCustomColorPanel(props: {
   readonly onPreview: (value: string) => void;
   readonly onCommit: (value: string) => void;
 }) {
+  const { t } = useI18n();
   const { onCommit, onPreview } = props;
   const [hsv, setHsv] = useState(() => hexToHsv(props.value));
   const currentColor = hsvToHex(hsv.h, hsv.s, hsv.v);
@@ -77,7 +79,7 @@ function ProviderCustomColorPanel(props: {
           }}
           onBlur={() => setHexDraft(null)}
           font="mono"
-          aria-label="Custom hex accent color"
+          aria-label={t("providers.accent.customHex")}
           spellCheck={false}
         />
       </div>
@@ -93,6 +95,7 @@ function ProviderCustomColorPicker(props: {
   readonly onClear: () => void;
   readonly onClose: () => void;
 }) {
+  const { t, locale } = useI18n();
   const normalized = normalizeProviderAccentColor(props.value);
 
   return (
@@ -108,10 +111,16 @@ function ProviderCustomColorPicker(props: {
             size="icon-sm"
             variant="ghost-muted"
             style={normalized ? { backgroundColor: normalized } : undefined}
-            aria-label={`${normalized ? "Change" : "Add"} accent color for ${props.displayName}`}
+            aria-label={
+              locale === "zh-CN"
+                ? `为 ${props.displayName} ${normalized ? "更改" : "添加"}强调色`
+                : `${normalized ? "Change" : "Add"} accent color for ${props.displayName}`
+            }
           >
             {normalized ? (
-              <span className="sr-only">Change accent color</span>
+              <span className="sr-only">
+                {locale === "zh-CN" ? "更改强调色" : "Change accent color"}
+              </span>
             ) : (
               <PlusIcon aria-hidden />
             )}
@@ -136,7 +145,7 @@ function ProviderCustomColorPicker(props: {
                   onClick={props.onClear}
                 >
                   <XIcon className="size-3.5" aria-hidden />
-                  Clear color
+                  {t("providers.accent.clear")}
                 </Button>
               }
             />
@@ -154,6 +163,7 @@ export function ProviderAccentColorPicker(props: {
   readonly description?: string;
   readonly layout?: "stacked" | "inline";
 }) {
+  const { t } = useI18n();
   const { description, displayName, layout = "stacked", onCommit } = props;
   const value = props.value ?? "";
   // The draft shows a dragged or just-committed color only while `value` is
@@ -200,7 +210,7 @@ export function ProviderAccentColorPicker(props: {
 
   return (
     <div className="grid gap-2">
-      <span className="text-xs font-medium text-foreground">Accent color</span>
+      <span className="text-xs font-medium text-foreground">{t("providers.accent.label")}</span>
       {picker}
       {description ? <span className="text-xs text-muted-foreground">{description}</span> : null}
     </div>

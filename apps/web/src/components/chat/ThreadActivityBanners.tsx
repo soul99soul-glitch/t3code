@@ -1,3 +1,5 @@
+import { readWebI18n } from "~/i18n/readWebI18n";
+import { translateWebSource } from "~/i18n/messages";
 import type {
   OrchestrationV2PendingBackgroundTask,
   OrchestrationV2ProviderGoal,
@@ -33,6 +35,7 @@ export function childInputNowItem(input: {
   readonly parentAwaitingUser: boolean;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }): ThreadNowItem | null {
+  const { locale: uiLocale } = readWebI18n();
   const { childThreadInputs, onOpenThread } = input;
   const first = childThreadInputs[0];
   if (!first || input.parentAwaitingUser) return null;
@@ -58,7 +61,9 @@ export function childInputNowItem(input: {
     )),
     actions: (
       <InlineButton onClick={() => onOpenThread(first.id)}>
-        {first.hasPendingApprovals ? "Open approval" : "Open question"}
+        {first.hasPendingApprovals
+          ? translateWebSource(uiLocale, "Open approval")
+          : translateWebSource(uiLocale, "Open question")}
       </InlineButton>
     ),
   };
@@ -71,6 +76,7 @@ export function goalNowItem(input: {
   readonly isWorking: boolean;
   readonly onSendCommand: (text: string, failureMessage: string) => Promise<void>;
 }): ThreadNowItem {
+  const { locale: uiLocale } = readWebI18n();
   const { isWorking, onSendCommand } = input;
   const presentation = presentProviderGoal(input.goal, isWorking);
   return {
@@ -89,7 +95,7 @@ export function goalNowItem(input: {
             <InlineButton
               onClick={() => void onSendCommand("/goal resume", "Failed to resume goal.")}
             >
-              Resume
+              {translateWebSource(uiLocale, "Resume")}
             </InlineButton>
             <span aria-hidden>·</span>
           </>
@@ -115,6 +121,7 @@ export function backgroundWorkNowItem(input: {
   readonly onStop: () => Promise<void>;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }): ThreadNowItem | null {
+  const { locale: uiLocale } = readWebI18n();
   const { onOpenThread } = input;
   const presentation = presentPendingBackgroundWork(input.tasks);
   if (presentation === null) return null;
@@ -137,7 +144,7 @@ export function backgroundWorkNowItem(input: {
     .filter((row) => row.activity)
     .toSorted((left, right) => right.updatedAtMs - left.updatedAtMs)[0];
   const isCommand = (row: (typeof rows)[number]) => row.task.kind !== "subagent";
-  const verb = presentation.waiting ? "Waiting on" : "Running";
+  const verb = translateWebSource(uiLocale, presentation.waiting ? "Waiting on" : "Running");
   const onlyThreadId = only?.childThreadId;
   const startedAtMs = only?.startedAtMs ?? null;
   return {
@@ -172,11 +179,11 @@ export function backgroundWorkNowItem(input: {
         )}
         {onlyThreadId === undefined ? null : (
           <InlineButton tone="muted" onClick={() => onOpenThread(onlyThreadId)}>
-            Open
+            {translateWebSource(uiLocale, "Open")}
           </InlineButton>
         )}
         <InlineButton disabled={input.stopDisabled} onClick={() => void input.onStop()}>
-          {input.stopping ? "Stopping..." : "Stop"}
+          {translateWebSource(uiLocale, input.stopping ? "Stopping..." : "Stop")}
         </InlineButton>
       </>
     ),
@@ -192,6 +199,8 @@ export function branchMismatchBannerItem(input: {
   readonly onRestore: () => void;
   readonly onDismiss: () => void;
 }): ComposerBannerStackItem {
+  const { locale: uiLocale } = readWebI18n();
+
   const { mismatch } = input;
   return {
     id: `branch-mismatch:${input.mismatchKey}`,
@@ -199,7 +208,9 @@ export function branchMismatchBannerItem(input: {
     icon: <GitBranchIcon />,
     title: (
       <span className="flex min-w-0 items-baseline gap-1.5">
-        <span className="shrink-0 font-normal text-muted-foreground">Branch changed from</span>
+        <span className="shrink-0 font-normal text-muted-foreground">
+          {translateWebSource(uiLocale, "Branch changed from")}
+        </span>
         <Tooltip>
           <TooltipTrigger
             render={

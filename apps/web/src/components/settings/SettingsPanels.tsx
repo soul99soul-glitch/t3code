@@ -13,6 +13,7 @@ import {
   type SidebarProjectGroupingMode,
 } from "@t3tools/contracts";
 import {
+  AppLocalePreference,
   DEFAULT_UNIFIED_SETTINGS,
   type DiffLayout,
   MAX_SIDEBAR_AUTO_SETTLE_AFTER_DAYS,
@@ -25,7 +26,7 @@ import { desktopUpdateChannelOf } from "@t3tools/shared/cliRelease";
 import { createModelSelection } from "@t3tools/shared/model";
 import * as Equal from "effect/Equal";
 import * as Schema from "effect/Schema";
-import { APP_VERSION, HOSTED_APP_CHANNEL, HOSTED_APP_CHANNEL_LABEL } from "../../branding";
+import { APP_VERSION, HOSTED_APP_CHANNEL } from "../../branding";
 import { CliCommandSettingsRow } from "./CliCommandSettingsRow";
 import { MobileAppSettingsRow } from "./MobileAppSettingsRow";
 import {
@@ -39,6 +40,8 @@ import {
 import { ProviderModelPicker } from "../chat/ProviderModelPicker";
 import { TraitsPicker } from "../chat/TraitsPicker";
 import { isElectron } from "../../env";
+import { useI18n } from "../../i18n/WebI18nContext";
+import { translateWebSource } from "../../i18n/messages";
 import { buildHostedChannelSelectionUrl, type HostedAppChannel } from "../../hostedPairing";
 import {
   readAppearanceModePreference,
@@ -121,6 +124,7 @@ const SIDEBAR_PROJECT_SORT_ORDER_LABELS: Record<SidebarProjectSortOrder, string>
   manual: "Manual",
 };
 const isSidebarProjectSortOrder = Schema.is(SidebarProjectSortOrder);
+const isAppLocalePreference = Schema.is(AppLocalePreference);
 
 const TIMESTAMP_FORMAT_LABELS = {
   locale: "System default",
@@ -141,15 +145,17 @@ const QUIT_CONFIRMATION_MODE_LABELS: Record<QuitConfirmationMode, string> = {
 
 const DEFAULT_DRIVER_KIND = ProviderDriverKind.make("codex");
 function AboutVersionTitle() {
+  const { t } = useI18n();
   return (
     <span className="inline-flex items-baseline gap-2">
-      <span>Version</span>
+      <span>{t("settings.about.version")}</span>
       <code className="text-2xs font-medium text-muted-foreground">{APP_VERSION}</code>
     </span>
   );
 }
 
 function AboutVersionSection() {
+  const { t, locale } = useI18n();
   const updateState = useDesktopUpdateState();
   const [switchChannel, setSwitchChannel] = useState<DesktopUpdateChannel | null>(null);
   const [isUpdateActionPending, setIsUpdateActionPending] = useState(false);
@@ -195,8 +201,11 @@ function AboutVersionSection() {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Could not download update",
-            description: error instanceof Error ? error.message : "Download failed.",
+            title: t("settings.about.error.downloadTitle"),
+            description:
+              error instanceof Error
+                ? error.message
+                : t("settings.about.error.downloadDescription"),
           }),
         );
       });
@@ -218,8 +227,9 @@ function AboutVersionSection() {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Could not confirm update",
-            description: error instanceof Error ? error.message : "Update confirmation failed.",
+            title: t("settings.about.error.confirmTitle"),
+            description:
+              error instanceof Error ? error.message : t("settings.about.error.confirmDescription"),
           }),
         );
         return;
@@ -234,8 +244,11 @@ function AboutVersionSection() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Could not install update",
-              description: error instanceof Error ? error.message : "Install failed.",
+              title: t("settings.about.error.installTitle"),
+              description:
+                error instanceof Error
+                  ? error.message
+                  : t("settings.about.error.installDescription"),
             }),
           );
         })
@@ -251,9 +264,8 @@ function AboutVersionSection() {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Could not check for updates",
-              description:
-                result.state.message ?? "Automatic updates are not available in this build.",
+              title: t("settings.about.error.checkTitle"),
+              description: result.state.message ?? t("settings.about.error.unavailable"),
             }),
           );
         }
@@ -262,8 +274,9 @@ function AboutVersionSection() {
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Could not check for updates",
-            description: error instanceof Error ? error.message : "Update check failed.",
+            title: t("settings.about.error.checkTitle"),
+            description:
+              error instanceof Error ? error.message : t("settings.about.error.checkDescription"),
           }),
         );
       });
@@ -276,19 +289,24 @@ function AboutVersionSection() {
       ? !canCheckForUpdate(updateState)
       : isDesktopUpdateButtonDisabled(updateState);
 
-  const actionLabel: Record<string, string> = { download: "Download", install: "Install" };
+  const actionLabel: Record<string, string> = {
+    download: t("settings.about.action.download"),
+    install: t("settings.about.action.install"),
+  };
   const statusLabel: Record<string, string> = {
-    checking: "Checking…",
-    downloading: "Downloading…",
+    checking: t("settings.about.action.checking"),
+    downloading: t("settings.about.action.downloading"),
     // Off its track, "up to date" only means no switch is pending; Review moves it.
-    ...(appOffTrack ? {} : { "up-to-date": "Up to Date" }),
+    ...(appOffTrack ? {} : { "up-to-date": t("settings.about.action.upToDate") }),
   };
   const buttonLabel =
-    actionLabel[action] ?? statusLabel[updateState?.status ?? ""] ?? "Check for Updates";
+    actionLabel[action] ??
+    statusLabel[updateState?.status ?? ""] ??
+    t("settings.about.action.checkForUpdates");
   const description =
     action === "download" || action === "install"
-      ? "Update available."
-      : (getDesktopUpdateDisabledReason(updateState) ?? "Current version of the application.");
+      ? t("settings.about.updateAvailable")
+      : (getDesktopUpdateDisabledReason(updateState) ?? t("settings.about.currentVersion"));
 
   return (
     <>
@@ -321,8 +339,10 @@ function AboutVersionSection() {
             unswitchedMachines > 0 ? (
               <>
                 {unswitchedMachines === 1
-                  ? "1 machine still runs"
-                  : `${unswitchedMachines} machines still run`}{" "}
+                  ? t("settings.about.updateTrack.remainingOne")
+                  : t("settings.about.updateTrack.remainingMany", {
+                      count: unswitchedMachines,
+                    })}{" "}
                 {channelSwitchLabel(selectedUpdateChannel === "nightly" ? "latest" : "nightly")}.{" "}
                 {/* The dialog moves what it can and says why it skips the rest. */}
                 <Button
@@ -331,11 +351,11 @@ function AboutVersionSection() {
                   disabled={updateRun !== null}
                   onClick={() => setSwitchChannel(selectedUpdateChannel)}
                 >
-                  Review
+                  {translateWebSource(locale, "Review")}
                 </Button>
               </>
             ) : (
-              "Switches this app and every connected machine whose database the target release supports."
+              t("settings.about.updateTrack.switchDescription")
             )
           }
           control={
@@ -350,17 +370,17 @@ function AboutVersionSection() {
               <SelectTrigger
                 size="sm"
                 className="w-full sm:w-40"
-                aria-label="Update track"
+                aria-label={t("settings.about.updateTrack.title")}
                 disabled={switchChannel !== null || updateRun !== null}
               >
                 <SelectValue>{channelSwitchLabel(selectedUpdateChannel)}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
                 <SelectItem hideIndicator value="latest">
-                  Stable
+                  {t("settings.about.updateTrack.option.stable")}
                 </SelectItem>
                 <SelectItem hideIndicator value="nightly">
-                  Nightly
+                  {t("settings.about.updateTrack.option.nightly")}
                 </SelectItem>
               </SelectPopup>
             </Select>
@@ -369,7 +389,8 @@ function AboutVersionSection() {
       ) : selectedHostedAppChannel ? (
         <SettingsRow
           {...searchableSetting("update-track")}
-          description="Switches the hosted app release channel."
+          title={t("settings.about.updateTrack.title")}
+          description={t("settings.about.updateTrack.description.hosted")}
           control={
             <Select
               value={selectedHostedAppChannel}
@@ -380,15 +401,23 @@ function AboutVersionSection() {
                 );
               }}
             >
-              <SelectTrigger size="sm" className="w-full sm:w-40" aria-label="Update track">
-                <SelectValue>{HOSTED_APP_CHANNEL_LABEL}</SelectValue>
+              <SelectTrigger
+                size="sm"
+                className="w-full sm:w-40"
+                aria-label={t("settings.about.updateTrack.title")}
+              >
+                <SelectValue>
+                  {selectedHostedAppChannel === "nightly"
+                    ? t("settings.about.updateTrack.option.nightly")
+                    : t("settings.about.updateTrack.option.latest")}
+                </SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
                 <SelectItem hideIndicator value="latest">
-                  Latest
+                  {t("settings.about.updateTrack.option.latest")}
                 </SelectItem>
                 <SelectItem hideIndicator value="nightly">
-                  Nightly
+                  {t("settings.about.updateTrack.option.nightly")}
                 </SelectItem>
               </SelectPopup>
             </Select>
@@ -404,6 +433,7 @@ function AboutVersionSection() {
 }
 
 export function useSettingsRestore(onRestored?: () => void) {
+  const { locale, t } = useI18n();
   const {
     theme,
     setTheme,
@@ -558,9 +588,14 @@ export function useSettingsRestore(onRestored?: () => void) {
     if (changedSettingLabels.length === 0) return;
     const api = readLocalApi();
     const confirmed = await (api ?? ensureLocalApi()).dialogs.confirm(
-      ["Restore default settings?", `This will reset: ${changedSettingLabels.join(", ")}.`].join(
-        "\n",
-      ),
+      [
+        t("settings.restore.confirmTitle"),
+        t("settings.restore.confirmDescription", {
+          settings: changedSettingLabels
+            .map((label) => translateWebSource(locale, label))
+            .join("、"),
+        }),
+      ].join("\n"),
       { variant: "destructive" },
     );
     if (!confirmed) return;
@@ -579,8 +614,8 @@ export function useSettingsRestore(onRestored?: () => void) {
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Couldn’t restore theme settings",
-          description: "Try again.",
+          title: t("appearance.theme.toast.restoreFailed"),
+          description: t("common.retry"),
         }),
       );
     };
@@ -761,6 +796,7 @@ export function LegacyFeaturesSection() {
 }
 
 export function GeneralSettingsPanel() {
+  const { locale, t, appLocale, setAppLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   const lastEnabledProjectGroupingMode = useRef<SidebarProjectGroupingMode>(
@@ -769,6 +805,39 @@ export function GeneralSettingsPanel() {
 
   return (
     <SettingsPageContainer>
+      <SettingsSection id="language" title={t("settings.language.title")}>
+        <SettingsRow
+          {...searchableSetting("app-language")}
+          description={t("settings.language.description")}
+          control={
+            <Select
+              value={appLocale}
+              onValueChange={(value) => {
+                if (isAppLocalePreference(value)) void setAppLocale(value);
+              }}
+            >
+              <SelectTrigger
+                size="sm"
+                className="w-full sm:w-44"
+                aria-label={t("settings.language.label")}
+              >
+                <SelectValue>
+                  {appLocale === "system"
+                    ? t("settings.language.system")
+                    : appLocale === "en"
+                      ? "English"
+                      : "简体中文"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectPopup align="end">
+                <SelectItem value="system">{t("settings.language.system")}</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="zh-CN">简体中文</SelectItem>
+              </SelectPopup>
+            </Select>
+          }
+        />
+      </SettingsSection>
       <SettingsSection id="notifications" title="Notifications">
         <NotificationSettings />
         <SettingsRow
@@ -867,7 +936,7 @@ export function GeneralSettingsPanel() {
             settings.sidebarWorkingShelfEnabled !==
             DEFAULT_UNIFIED_SETTINGS.sidebarWorkingShelfEnabled ? (
               <SettingResetButton
-                label="working section"
+                label={translateWebSource(locale, "Working section")}
                 onClick={() =>
                   updateSettings({
                     sidebarWorkingShelfEnabled: DEFAULT_UNIFIED_SETTINGS.sidebarWorkingShelfEnabled,
@@ -1033,17 +1102,19 @@ export function GeneralSettingsPanel() {
               }}
             >
               <SelectTrigger size="sm" className="w-full sm:w-40" aria-label="Timestamp format">
-                <SelectValue>{TIMESTAMP_FORMAT_LABELS[settings.timestampFormat]}</SelectValue>
+                <SelectValue>
+                  {translateWebSource(locale, TIMESTAMP_FORMAT_LABELS[settings.timestampFormat])}
+                </SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
                 <SelectItem hideIndicator value="locale">
-                  {TIMESTAMP_FORMAT_LABELS.locale}
+                  {translateWebSource(locale, TIMESTAMP_FORMAT_LABELS.locale)}
                 </SelectItem>
                 <SelectItem hideIndicator value="12-hour">
-                  {TIMESTAMP_FORMAT_LABELS["12-hour"]}
+                  {translateWebSource(locale, TIMESTAMP_FORMAT_LABELS["12-hour"])}
                 </SelectItem>
                 <SelectItem hideIndicator value="24-hour">
-                  {TIMESTAMP_FORMAT_LABELS["24-hour"]}
+                  {translateWebSource(locale, TIMESTAMP_FORMAT_LABELS["24-hour"])}
                 </SelectItem>
               </SelectPopup>
             </Select>
@@ -1476,6 +1547,7 @@ function ScopedCompactIdleThreadsRow() {
 }
 
 export function ThreadsSettingsPanel() {
+  const { locale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   const navigate = useNavigate();
@@ -1736,7 +1808,7 @@ export function ThreadsSettingsPanel() {
               </span>
             ) : !hasTextGenerationProvider ? (
               <span className="text-sm text-muted-foreground">
-                No text generation providers available.
+                {translateWebSource(locale, "No text generation providers available.")}
               </span>
             ) : (
               <div className="flex flex-wrap items-center justify-end gap-1.5">
