@@ -1,3 +1,5 @@
+import { readWebI18n } from "./i18n/readWebI18n";
+import { translateWebSource } from "./i18n/messages";
 import {
   EDITORS,
   type ContextMenuItem,
@@ -61,14 +63,15 @@ function buildFileContextMenuItems(input: {
   readonly capabilities: FileContextMenuCapabilities;
 }): readonly ContextMenuItem<FileContextMenuAction>[] {
   if (!input.hasAbsolutePath) return [];
+  const { locale } = readWebI18n();
   const items: ContextMenuItem<FileContextMenuAction>[] = [];
   if (input.capabilities.canOpenDefault) {
-    items.push({ id: "open", label: "Open", icon: "pencil" });
+    items.push({ id: "open", label: translateWebSource(locale, "Open"), icon: "pencil" });
   }
   if (input.capabilities.revealLabel !== undefined) {
     items.push({
       id: "reveal-in-folder",
-      label: input.capabilities.revealLabel,
+      label: translateWebSource(locale, input.capabilities.revealLabel),
       icon: "folder-tree",
     });
   }
@@ -76,7 +79,7 @@ function buildFileContextMenuItems(input: {
   if (editorIds.length > 0) {
     items.push({
       id: "open-with",
-      label: "Open with",
+      label: translateWebSource(locale, "Open with"),
       children: editorIds.map((editorId) => ({
         id: `editor:${editorId}` as FileContextMenuAction,
         label: EDITOR_LABEL_BY_ID.get(editorId) ?? editorId,

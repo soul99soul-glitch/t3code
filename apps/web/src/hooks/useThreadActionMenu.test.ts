@@ -18,6 +18,7 @@ function deferred<T>() {
 }
 
 const state = vi.hoisted(() => ({
+  locale: "en" as "en" | "zh-CN",
   granted: new Set<string>(),
   effects: [] as string[],
   completed: deferred<void>(),
@@ -100,7 +101,7 @@ vi.mock("../components/ui/toast", () => ({
 }));
 vi.mock("../components/Sidebar.snooze", () => ({
   resolveSnoozePresets: () => [
-    { id: "hour", label: "In 1 hour", whenLabel: "3 PM", snoozedUntil: "2099-01-01T00:00:00Z" },
+    { id: "after:60", label: "In 1 hour", whenLabel: "3 PM", snoozedUntil: "2099-01-01T00:00:00Z" },
   ],
   snoozeWakeDescription: () => "later",
 }));
@@ -110,6 +111,18 @@ vi.mock("./useCopyToClipboard", () => ({
 vi.mock("./useHandleNewThread", () => ({
   useNewThreadHandler: () => async () => recordEffect("draft"),
 }));
+vi.mock("../i18n/readWebI18n", async () => {
+  const { translateWebMessage } = await import("../i18n/messages");
+  return {
+    readWebI18n: () => ({
+      locale: state.locale,
+      t: (
+        key: Parameters<typeof translateWebMessage>[1],
+        values?: Parameters<typeof translateWebMessage>[2],
+      ) => translateWebMessage(state.locale, key, values),
+    }),
+  };
+});
 vi.mock("./useSettings", () => ({
   useClientSettings: (select: (settings: unknown) => unknown) =>
     select({
@@ -158,6 +171,7 @@ const createMenu = () =>
   });
 
 beforeEach(() => {
+  state.locale = "en";
   state.granted = new Set(["primary"]);
   state.effects = [];
   state.completed = deferred<void>();
@@ -165,6 +179,24 @@ beforeEach(() => {
 });
 
 describe("thread menu permissions", () => {
+  it("reads the selected language when opening the native thread menu", async () => {
+    const shown = deferred<ReadonlyArray<ContextMenuItem<ThreadActionMenuId>>>();
+    state.show.mockImplementation(async (items) => {
+      shown.resolve(items);
+      return null;
+    });
+    const menu = createMenu();
+    state.locale = "zh-CN";
+    menu.openMenu(position);
+    const items = await shown.promise;
+    expect(items.find((item) => item.id === "pin")?.label).toBe("置顶任务");
+    expect(items.find((item) => item.id === "rename")?.label).toBe("重命名任务");
+    expect(
+      items.find((item) => item.id === "copy")?.children?.find((item) => item.id === "copy-branch")
+        ?.label,
+    ).toBe("分支");
+    expect(items.find((item) => item.id === "pin")?.disabled).toBe(true);
+  });
   it.each(["rename", "regenerate-title", "delete", "pin", "settle", "archive"] as const)(
     "%s rechecks after the native menu closes",
     async (action) => {

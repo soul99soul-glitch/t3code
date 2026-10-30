@@ -137,7 +137,11 @@ beforeEach(() => {
     await Promise.all(items.flatMap((item) => Object.values(item.items)));
   });
   vi.stubGlobal("ClipboardItem", TestClipboardItem);
-  vi.stubGlobal("navigator", { clipboard: { write: state.clipboard } });
+  vi.stubGlobal("navigator", {
+    language: "en-US",
+    languages: ["en-US"],
+    clipboard: { write: state.clipboard },
+  });
 });
 
 afterEach(() => vi.unstubAllGlobals());

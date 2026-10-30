@@ -1,3 +1,5 @@
+import { readWebI18n } from "../../i18n/readWebI18n";
+import { translateWebSource } from "../../i18n/messages";
 import {
   formatFilePathForClipboard,
   type MediaActionId,
@@ -156,7 +158,11 @@ export function MediaActions({
         });
       }
 
-      const action = await api.contextMenu.show(items, position);
+      const { locale } = readWebI18n();
+      const action = await api.contextMenu.show(
+        items.map((item) => ({ ...item, label: translateWebSource(locale, item.label) })),
+        position,
+      );
       if (!action) return;
       failureTitle = `Could not ${items.find((item) => item.id === action)?.label.toLowerCase() ?? "complete media action"}`;
       const text =

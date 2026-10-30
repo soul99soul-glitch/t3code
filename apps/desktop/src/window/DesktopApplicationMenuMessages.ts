@@ -29,6 +29,9 @@ export interface DesktopApplicationMenuMessages {
   readonly stopSpeaking: string;
   readonly delete: string;
   readonly selectAll: string;
+  readonly copyLink: string;
+  readonly copyImage: string;
+  readonly noSuggestions: string;
   readonly reload: string;
   readonly forceReload: string;
   readonly toggleDeveloperTools: string;
@@ -78,6 +81,9 @@ const messages = {
     stopSpeaking: "Stop Speaking",
     delete: "Delete",
     selectAll: "Select All",
+    copyLink: "Copy Link",
+    copyImage: "Copy Image",
+    noSuggestions: "No suggestions",
     reload: "Reload",
     forceReload: "Force Reload",
     toggleDeveloperTools: "Toggle Developer Tools",
@@ -125,6 +131,9 @@ const messages = {
     stopSpeaking: "停止朗读",
     delete: "删除",
     selectAll: "全选",
+    copyLink: "复制链接",
+    copyImage: "复制图片",
+    noSuggestions: "无拼写建议",
     reload: "重新加载",
     forceReload: "强制重新加载",
     toggleDeveloperTools: "切换开发者工具",

@@ -35,6 +35,7 @@ import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as DesktopRendererHistory from "../telemetry/DesktopRendererHistory.ts";
 import { makeQuitShortcutHandler } from "./QuitHold.ts";
 import { copyContextMenuImage } from "./ContextMenuImage.ts";
+import { resolveDesktopApplicationMenuMessages } from "./DesktopApplicationMenuMessages.ts";
 
 const TITLEBAR_HEIGHT = 40;
 // Match --workspace-topbar-height in apps/web/src/index.css; native macOS buttons stay 14 points at any zoom.
@@ -525,66 +526,81 @@ export const make = Effect.gen(function* () {
       contextMenuContents.add(contents);
       contents.on("context-menu", (event, params) => {
         event.preventDefault();
-        if (contents.isDestroyed() || ownerWindow.isDestroyed()) return;
-        // Right-clicking a guest may leave native editing roles targeting the host renderer.
-        contents.focus();
+        const show = Effect.gen(function* () {
+          const settings = yield* clientSettings.get;
+          const systemLocale = yield* electronApp.systemLocale;
+          const messages = resolveDesktopApplicationMenuMessages(
+            Option.getOrElse(settings, () => DEFAULT_CLIENT_SETTINGS).appLocale,
+            [systemLocale],
+          );
+          if (contents.isDestroyed() || ownerWindow.isDestroyed()) return;
+          // Right-clicking a guest may leave native editing roles targeting the host renderer.
+          contents.focus();
 
-        const menuTemplate: Electron.MenuItemConstructorOptions[] = [];
+          const menuTemplate: Electron.MenuItemConstructorOptions[] = [];
 
-        if (params.misspelledWord) {
-          for (const suggestion of params.dictionarySuggestions.slice(0, 5)) {
+          if (params.misspelledWord) {
+            for (const suggestion of params.dictionarySuggestions.slice(0, 5)) {
+              menuTemplate.push({
+                label: suggestion,
+                click: () => {
+                  if (!contents.isDestroyed()) contents.replaceMisspelling(suggestion);
+                },
+              });
+            }
+            if (params.dictionarySuggestions.length === 0) {
+              menuTemplate.push({ label: messages.noSuggestions, enabled: false });
+            }
+            menuTemplate.push({ type: "separator" });
+          }
+
+          if (Option.isSome(ElectronShell.parseSafeExternalUrl(params.linkURL))) {
+            menuTemplate.push(
+              {
+                label: messages.copyLink,
+                click: () => {
+                  void runPromise(electronShell.copyText(params.linkURL));
+                },
+              },
+              { type: "separator" },
+            );
+          }
+
+          if (params.mediaType === "image") {
             menuTemplate.push({
-              label: suggestion,
+              label: messages.copyImage,
               click: () => {
-                if (!contents.isDestroyed()) contents.replaceMisspelling(suggestion);
+                void runPromise(
+                  Effect.tryPromise(() => copyContextMenuImage(contents, params)).pipe(
+                    Effect.catch(() => logWindowWarning("failed to copy context-menu image")),
+                  ),
+                );
               },
             });
+            menuTemplate.push({ type: "separator" });
           }
-          if (params.dictionarySuggestions.length === 0) {
-            menuTemplate.push({ label: "No suggestions", enabled: false });
-          }
-          menuTemplate.push({ type: "separator" });
-        }
 
-        if (Option.isSome(ElectronShell.parseSafeExternalUrl(params.linkURL))) {
           menuTemplate.push(
+            { role: "cut", label: messages.cut, enabled: params.editFlags.canCut },
+            { role: "copy", label: messages.copy, enabled: params.editFlags.canCopy },
+            { role: "paste", label: messages.paste, enabled: params.editFlags.canPaste },
             {
-              label: "Copy Link",
-              click: () => {
-                void runPromise(electronShell.copyText(params.linkURL));
-              },
+              role: "selectAll",
+              label: messages.selectAll,
+              enabled: params.editFlags.canSelectAll,
             },
-            { type: "separator" },
           );
-        }
 
-        if (params.mediaType === "image") {
-          menuTemplate.push({
-            label: "Copy Image",
-            click: () => {
-              void runPromise(
-                Effect.tryPromise(() => copyContextMenuImage(contents, params)).pipe(
-                  Effect.catch(() => logWindowWarning("failed to copy context-menu image")),
-                ),
-              );
-            },
-          });
-          menuTemplate.push({ type: "separator" });
-        }
-
-        menuTemplate.push(
-          { role: "cut", enabled: params.editFlags.canCut },
-          { role: "copy", enabled: params.editFlags.canCopy },
-          { role: "paste", enabled: params.editFlags.canPaste },
-          { role: "selectAll", enabled: params.editFlags.canSelectAll },
-        );
-
-        void runPromise(
-          electronMenu.popupTemplate({
+          yield* electronMenu.popupTemplate({
             window: ownerWindow,
             template: menuTemplate,
             ...(params.frame ? { frame: params.frame } : {}),
-          }),
+          });
+        });
+        runFork(
+          show.pipe(
+            Effect.catch((cause) => logWindowWarning("could not open context menu", { cause })),
+          ),
         );
       });
       contents.on("did-create-window", (popup) => {

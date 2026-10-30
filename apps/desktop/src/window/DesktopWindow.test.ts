@@ -1,7 +1,11 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, describe, it } from "@effect/vitest";
 import * as Deferred from "effect/Deferred";
-import { DesktopSnapShotId } from "@t3tools/contracts";
+import {
+  DesktopSnapShotId,
+  DEFAULT_CLIENT_SETTINGS,
+  type ClientSettings,
+} from "@t3tools/contracts";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
 import * as Fiber from "effect/Fiber";
@@ -155,6 +159,7 @@ const layerDesktopClientSettings = Layer.mock(DesktopClientSettings.DesktopClien
 
 const layerElectronApp = Layer.mock(ElectronApp.ElectronApp)({
   quit: Effect.void,
+  systemLocale: Effect.succeed("en-US"),
 });
 
 const layerDesktopAssets = Layer.succeed(DesktopAssets.DesktopAssets, {
@@ -211,6 +216,7 @@ const desktopWindowBoundsEquivalence = Schema.toEquivalence(
 
 function layerTest(input: {
   readonly window: Electron.BrowserWindow;
+  readonly clientSettings?: ClientSettings;
   readonly createCount: Ref.Ref<number>;
   readonly mainWindow: Ref.Ref<Option.Option<Electron.BrowserWindow>>;
   readonly createdWindowOptions?: Electron.BrowserWindowConstructorOptions[];
@@ -300,7 +306,9 @@ function layerTest(input: {
         }),
         layerDesktopEnvironment,
         layerDesktopAppSettings,
-        layerDesktopClientSettings,
+        input.clientSettings
+          ? DesktopClientSettings.layerTest(Option.some(input.clientSettings))
+          : layerDesktopClientSettings,
         layerDesktopServerExposure,
         DesktopState.layer,
         layerElectronApp,
@@ -613,6 +621,51 @@ describe("DesktopWindow", () => {
           [0.5, 0, -0.5],
         );
         assert.deepEqual(previewZoomReapplies, [0.5, 0, -0.5]);
+      }).pipe(Effect.provide(layer));
+    }),
+  );
+
+  it.effect.each([
+    {
+      locale: "zh-CN" as const,
+      labels: ["无拼写建议", "复制链接", "复制图片", "剪切", "复制", "粘贴", "全选"],
+    },
+    {
+      locale: "en" as const,
+      labels: ["No suggestions", "Copy Link", "Copy Image", "Cut", "Copy", "Paste", "Select All"],
+    },
+  ])("uses the selected $locale language for native editing menus", ({ locale, labels }) =>
+    Effect.gen(function* () {
+      const fakeWindow = makeFakeBrowserWindow();
+      const shown = yield* Deferred.make<readonly Electron.MenuItemConstructorOptions[]>();
+      const layer = layerTest({
+        window: fakeWindow.window,
+        createCount: yield* Ref.make(0),
+        mainWindow: yield* Ref.make<Option.Option<Electron.BrowserWindow>>(Option.none()),
+        clientSettings: { ...DEFAULT_CLIENT_SETTINGS, appLocale: locale },
+        onPopupTemplate: ({ template }) => Deferred.succeed(shown, template).pipe(Effect.asVoid),
+      });
+      yield* Effect.gen(function* () {
+        const desktopWindow = yield* DesktopWindow.DesktopWindow;
+        yield* desktopWindow.handleBackendReady(new URL("http://127.0.0.1:3773"));
+        const listener = fakeWindow.webContentsListeners.get("context-menu");
+        assert.isDefined(listener);
+        listener(
+          { preventDefault() {} },
+          {
+            misspelledWord: "wrng",
+            dictionarySuggestions: [],
+            linkURL: "https://example.com/link",
+            mediaType: "image",
+            editFlags: { canCut: true, canCopy: true, canPaste: false, canSelectAll: true },
+          },
+        );
+        const template = yield* Deferred.await(shown);
+        assert.deepEqual(
+          template.flatMap((item) => (item.label ? [item.label] : [])),
+          labels,
+        );
+        assert.isFalse(template.find((item) => item.role === "paste")?.enabled);
       }).pipe(Effect.provide(layer));
     }),
   );

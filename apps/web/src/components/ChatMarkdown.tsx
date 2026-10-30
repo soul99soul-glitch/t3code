@@ -1047,7 +1047,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
     );
   },
   a: function MarkdownAnchor({ node, href, children, title: _title, ...props }) {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const {
       canOperateHost,
       canOperatePreview,
@@ -1222,6 +1222,13 @@ const CHAT_MARKDOWN_COMPONENTS = {
                   : "link-to-thread";
             void showExternalLinkContextMenu({
               href,
+              labels: {
+                openInPreview: translateWebSource(locale, "Open in integrated browser"),
+                openExternal: translateWebSource(locale, "Open in system browser"),
+                copyLink: translateWebSource(locale, "Copy Link"),
+                linkToThread: translateWebSource(locale, "Link to thread"),
+                unlinkFromThread: translateWebSource(locale, "Unlink from thread"),
+              },
               canOpenInPreview,
               threadLinkAction,
               position: { x: event.clientX, y: event.clientY },

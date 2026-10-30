@@ -389,31 +389,39 @@ export type TerminalContextMenuAction =
   | "select-all"
   | "scroll-to-bottom";
 
-function terminalSelectionMenuItems(options?: {
-  canAddToChat?: boolean;
-}): ContextMenuItem<"add-to-chat" | "copy">[] {
+function terminalSelectionMenuItems(
+  options: {
+    canAddToChat?: boolean;
+  },
+  tx: (source: string) => string,
+): ContextMenuItem<"add-to-chat" | "copy">[] {
   return [
     ...(options?.canAddToChat === false
       ? []
-      : ([{ id: "add-to-chat", label: "Add to chat" }] satisfies ContextMenuItem<"add-to-chat">[])),
-    { id: "copy", label: "Copy" },
+      : ([
+          { id: "add-to-chat", label: tx("Add to chat") },
+        ] satisfies ContextMenuItem<"add-to-chat">[])),
+    { id: "copy", label: tx("Copy") },
   ];
 }
 
-function terminalContextMenuItems(options: {
-  hasSelection: boolean;
-  canAddToChat?: boolean;
-  readOnly?: boolean;
-}): ContextMenuItem<TerminalContextMenuAction>[] {
+function terminalContextMenuItems(
+  options: {
+    hasSelection: boolean;
+    canAddToChat?: boolean;
+    readOnly?: boolean;
+  },
+  tx: (source: string) => string,
+): ContextMenuItem<TerminalContextMenuAction>[] {
   const { hasSelection, canAddToChat = true } = options;
   return [
-    ...terminalSelectionMenuItems({ canAddToChat }).map((item) => ({
+    ...terminalSelectionMenuItems({ canAddToChat }, tx).map((item) => ({
       ...item,
       disabled: !hasSelection,
     })),
-    { id: "paste", label: "Paste", ...(options.readOnly ? { disabled: true } : {}) },
-    { id: "select-all", label: "Select all" },
-    { id: "scroll-to-bottom", label: "Jump to latest" },
+    { id: "paste", label: tx("Paste"), ...(options.readOnly ? { disabled: true } : {}) },
+    { id: "select-all", label: tx("Select all") },
+    { id: "scroll-to-bottom", label: tx("Jump to latest") },
   ];
 }
 
@@ -859,11 +867,14 @@ function TerminalSessionViewport({
         let clicked: TerminalContextMenuAction | null;
         try {
           clicked = await localApi.contextMenu.show(
-            terminalContextMenuItems({
-              hasSelection: selectionAction !== null,
-              canAddToChat: canAddSelectionToChat(),
-              readOnly: !hasTerminalWriteAccess(),
-            }),
+            terminalContextMenuItems(
+              {
+                hasSelection: selectionAction !== null,
+                canAddToChat: canAddSelectionToChat(),
+                readOnly: !hasTerminalWriteAccess(),
+              },
+              localizeTerminalSource,
+            ),
             { x: event.clientX, y: event.clientY },
           );
         } catch (error) {
@@ -914,7 +925,10 @@ function TerminalSessionViewport({
         openSelectionMenuRequestIdRef.current = requestId;
         const clicked = await localApi.contextMenu
           .show(
-            terminalSelectionMenuItems({ canAddToChat: canAddSelectionToChat() }),
+            terminalSelectionMenuItems(
+              { canAddToChat: canAddSelectionToChat() },
+              localizeTerminalSource,
+            ),
             nextAction.position,
           )
           .finally(() => {

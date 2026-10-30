@@ -1,3 +1,5 @@
+import { readWebI18n } from "../i18n/readWebI18n";
+import { translateWebSource } from "../i18n/messages";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
 import type { EnvironmentThreadShell } from "@t3tools/client-runtime/state/shell";
 import { useProjects, useServerConfigs, useThreadShells } from "~/state/entities";
@@ -1123,7 +1125,11 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
       },
     );
 
-    const action = await api.contextMenu.show(items, { x: event.clientX, y: event.clientY });
+    const { locale } = readWebI18n();
+    const action = await api.contextMenu.show(
+      items.map((item) => ({ ...item, label: translateWebSource(locale, item.label) })),
+      { x: event.clientX, y: event.clientY },
+    );
     switch (action) {
       case "rename":
         setRenamingDevice(surface.id);

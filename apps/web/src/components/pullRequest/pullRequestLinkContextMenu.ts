@@ -1,3 +1,5 @@
+import { readWebI18n } from "../../i18n/readWebI18n";
+import { translateWebSource } from "../../i18n/messages";
 import type { ContextMenuItem } from "@t3tools/contracts";
 import {
   type SourceControlDefinition,
@@ -12,13 +14,15 @@ import { toastManager } from "../ui/toast";
 export type PullRequestLinkContextMenuAction = "copy-link" | "open-external";
 
 export const openOnHostLabel = (host: SourceControlDefinition): string =>
-  host === UNKNOWN_SOURCE_CONTROL_CLIENT ? "Open on host" : `Open on ${host.label}`;
+  host === UNKNOWN_SOURCE_CONTROL_CLIENT
+    ? translateWebSource(readWebI18n().locale, "Open on host")
+    : readWebI18n().t("contextMenu.openOnHost", { host: host.label });
 
 function pullRequestLinkContextMenuItems(
   openLabel: string,
 ): readonly ContextMenuItem<PullRequestLinkContextMenuAction>[] {
   return [
-    { id: "copy-link", label: "Copy link", icon: "copy" },
+    { id: "copy-link", label: translateWebSource(readWebI18n().locale, "Copy link"), icon: "copy" },
     { id: "open-external", label: openLabel },
   ];
 }

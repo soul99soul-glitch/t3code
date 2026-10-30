@@ -42,30 +42,47 @@ export type DraftActionMenuId =
   | "project-settings"
   | "discard";
 
-export function buildDraftActionMenuItems(options: {
-  readonly hasPath: boolean;
-  readonly hasBranch: boolean;
-  readonly hasProject: boolean;
-}): ReadonlyArray<ContextMenuItem<DraftActionMenuId>> {
+export function buildDraftActionMenuItems(
+  options: {
+    readonly hasPath: boolean;
+    readonly hasBranch: boolean;
+    readonly hasProject: boolean;
+  },
+  translate: WebTranslate,
+): ReadonlyArray<ContextMenuItem<DraftActionMenuId>> {
   return [
     {
       id: "copy",
-      label: "Copy",
+      label: translate("sidebar.action.copy"),
       icon: "copy",
       disabled: !options.hasPath && !options.hasBranch,
       children: [
-        ...(options.hasPath ? [{ id: "copy-path" as const, label: "Path", icon: "folder" }] : []),
+        ...(options.hasPath
+          ? [{ id: "copy-path" as const, label: translate("sidebar.action.path"), icon: "folder" }]
+          : []),
         ...(options.hasBranch
-          ? [{ id: "copy-branch" as const, label: "Branch", icon: "git-branch" }]
+          ? [
+              {
+                id: "copy-branch" as const,
+                label: translate("sidebar.action.branch"),
+                icon: "git-branch",
+              },
+            ]
           : []),
       ],
     },
     ...(options.hasProject
-      ? [{ id: "project-settings" as const, label: "Project settings", icon: "settings" }]
+      ? [
+          {
+            id: "project-settings" as const,
+            label: translate("sidebar.action.projectSettings"),
+            icon: "settings",
+          },
+        ]
       : []),
     {
       id: "discard",
-      label: "Discard draft",
+      label: translate("sidebar.discardDraft"),
       icon: "trash",
       destructive: true,
       separatorBefore: true,
@@ -102,21 +119,43 @@ export interface ThreadActionMenuState {
   readonly canTurnIntoProject?: boolean;
 }
 
-function localizeSnoozePresetLabel(preset: SnoozePreset, t: WebTranslate): string {
-  switch (preset.id) {
-    case "hour":
-      return t("sidebar.snooze.hour");
-    case "three-hours":
-      return t("sidebar.snooze.threeHours");
-    case "evening":
-      return t("sidebar.snooze.evening");
-    case "tomorrow":
-      return t("sidebar.snooze.tomorrow");
-    case "next-week":
-      return t("sidebar.snooze.nextWeek");
-    default:
-      return preset.label;
+export function localizeSnoozePresetLabel(preset: SnoozePreset, t: WebTranslate): string {
+  if (preset.id.startsWith("after:")) {
+    const minutes = Number(preset.id.slice("after:".length));
+    if (Number.isInteger(minutes) && minutes > 0) {
+      return minutes % 1440 === 0
+        ? t(minutes === 1440 ? "sidebar.snooze.afterDay" : "sidebar.snooze.afterDays", {
+            count: minutes / 1440,
+          })
+        : minutes % 60 === 0
+          ? t(minutes === 60 ? "sidebar.snooze.afterHour" : "sidebar.snooze.afterHours", {
+              count: minutes / 60,
+            })
+          : t(minutes === 1 ? "sidebar.snooze.afterMinute" : "sidebar.snooze.afterMinutes", {
+              count: minutes,
+            });
+    }
   }
+  const calendarLabels: Readonly<Record<string, Parameters<WebTranslate>[0]>> = {
+    "This morning": "sidebar.snooze.morning",
+    "This afternoon": "sidebar.snooze.afternoon",
+    "This evening": "sidebar.snooze.evening",
+    Tomorrow: "sidebar.snooze.tomorrow",
+    "Next week": "sidebar.snooze.nextWeek",
+    Monday: "sidebar.snooze.monday",
+    Tuesday: "sidebar.snooze.tuesday",
+    Wednesday: "sidebar.snooze.wednesday",
+    Thursday: "sidebar.snooze.thursday",
+    Friday: "sidebar.snooze.friday",
+    Saturday: "sidebar.snooze.saturday",
+    Sunday: "sidebar.snooze.sunday",
+  };
+  const key = calendarLabels[preset.label];
+  if (key) return t(key);
+  const nextDay = preset.label.startsWith("Next ")
+    ? calendarLabels[preset.label.slice(5)]
+    : undefined;
+  return nextDay ? t("sidebar.snooze.nextDay", { day: t(nextDay) }) : preset.label;
 }
 
 /** Local navigation, read markers, and copying remain available to read-only clients. */
@@ -136,20 +175,14 @@ export function threadActionRequiresOperate(action: ThreadActionMenuId): boolean
 
 export function buildThreadActionMenuItems(
   state: ThreadActionMenuState,
-  translate?: WebTranslate,
+  translate: WebTranslate,
 ): ReadonlyArray<ContextMenuItem<ThreadActionMenuId>> {
-  const label = (
-    key: Parameters<WebTranslate>[0],
-    fallback: string,
-    values?: Parameters<WebTranslate>[1],
-  ) => translate?.(key, values) ?? fallback;
-
   const items: ReadonlyArray<ContextMenuItem<ThreadActionMenuId>> = [
     ...(state.branch
       ? [
           {
             id: "new-thread-on-branch" as const,
-            label: label("sidebar.action.newThreadOnBranch", `New thread on ${state.branch}`, {
+            label: translate("sidebar.action.newThreadOnBranch", {
               branch: state.branch,
             }),
             icon: "message-square-plus",
@@ -161,12 +194,12 @@ export function buildThreadActionMenuItems(
           state.isPinned
             ? {
                 id: "unpin" as const,
-                label: label("sidebar.action.unpin", "Unpin thread"),
+                label: translate("sidebar.action.unpin"),
                 icon: "pin-off",
               }
             : {
                 id: "pin" as const,
-                label: label("sidebar.action.pin", "Pin thread"),
+                label: translate("sidebar.action.pin"),
                 icon: "pin",
               },
         ]
@@ -176,12 +209,12 @@ export function buildThreadActionMenuItems(
           state.isSettled
             ? {
                 id: "unsettle" as const,
-                label: label("sidebar.action.unsettle", "Un-settle thread"),
+                label: translate("sidebar.action.unsettle"),
                 icon: "circle-check",
               }
             : {
                 id: "settle" as const,
-                label: label("sidebar.action.settle", "Settle thread"),
+                label: translate("sidebar.action.settle"),
                 icon: "circle-check",
               },
         ]
@@ -191,22 +224,22 @@ export function buildThreadActionMenuItems(
           state.isSnoozed
             ? {
                 id: "unsnooze" as const,
-                label: label("sidebar.action.wake", "Wake thread"),
+                label: translate("sidebar.action.wake"),
                 icon: "clock",
               }
             : {
                 id: "snooze" as const,
-                label: label("sidebar.action.snooze", "Snooze"),
+                label: translate("sidebar.action.snooze"),
                 icon: "clock",
                 disabled: !state.canSnoozeNow,
                 children: [
                   ...state.snoozePresets.map((preset) => ({
                     id: `snooze:${preset.id}` as const,
-                    label: `${translate ? localizeSnoozePresetLabel(preset, translate) : preset.label} (${preset.whenLabel})`,
+                    label: `${localizeSnoozePresetLabel(preset, translate)} (${preset.whenLabel})`,
                   })),
                   {
                     id: "snooze:custom" as const,
-                    label: "Custom…",
+                    label: translate("sidebar.snooze.custom"),
                     separatorBefore: state.snoozePresets.length > 0,
                   },
                 ],
@@ -215,7 +248,7 @@ export function buildThreadActionMenuItems(
       : []),
     {
       id: "rename",
-      label: label("sidebar.action.rename", "Rename thread"),
+      label: translate("sidebar.action.rename"),
       icon: "pencil",
       separatorBefore: true,
     },
@@ -224,8 +257,8 @@ export function buildThreadActionMenuItems(
           {
             id: "regenerate-title" as const,
             label: state.isRegeneratingTitle
-              ? label("sidebar.action.regenerating", "Regenerating…")
-              : label("sidebar.action.regenerateTitle", "Regenerate title"),
+              ? translate("sidebar.action.regenerating")
+              : translate("sidebar.action.regenerateTitle"),
             icon: "refresh-cw",
             disabled: state.isRegeneratingTitle,
           },
@@ -233,14 +266,14 @@ export function buildThreadActionMenuItems(
       : []),
     {
       id: "mark-unread",
-      label: label("sidebar.action.markUnread", "Mark unread"),
+      label: translate("sidebar.action.markUnread"),
       icon: "mail-open",
     },
     ...(state.canShareWithGuest
       ? [
           {
             id: "share-guest" as const,
-            label: label("sidebar.action.shareGuest", "Share with guest"),
+            label: translate("sidebar.action.shareGuest"),
             icon: "user-plus",
           },
         ]
@@ -250,8 +283,8 @@ export function buildThreadActionMenuItems(
           {
             id: "filter-by-project" as const,
             label: state.projectFilter.isActive
-              ? label("upstream.sidebar.allProjects", "Show all projects")
-              : label("upstream.sidebar.projectFilter", `Filter by ${state.projectFilter.label}`, {
+              ? translate("upstream.sidebar.allProjects")
+              : translate("upstream.sidebar.projectFilter", {
                   project: state.projectFilter.label,
                 }),
             icon: "folder-tree",
@@ -262,7 +295,7 @@ export function buildThreadActionMenuItems(
       ? [
           {
             id: "turn-into-project" as const,
-            label: "Turn into project",
+            label: translate("sidebar.action.turnIntoProject"),
             icon: "folder-plus",
             disabled: state.isRunning,
           },
@@ -272,17 +305,17 @@ export function buildThreadActionMenuItems(
       ? [
           {
             id: "auto-settle" as const,
-            label: label("upstream.sidebar.autoSettle", "Auto-settle behavior"),
+            label: translate("upstream.sidebar.autoSettle"),
             icon: "timer",
             children: [
               {
                 id: "auto-settle:enabled" as const,
-                label: label("upstream.sidebar.enabled", "Enabled"),
+                label: translate("upstream.sidebar.enabled"),
                 checked: state.autoSettleEnabled,
               },
               {
                 id: "auto-settle:disabled" as const,
-                label: label("upstream.sidebar.disabled", "Disabled"),
+                label: translate("upstream.sidebar.disabled"),
                 checked: !state.autoSettleEnabled,
               },
             ],
@@ -291,43 +324,47 @@ export function buildThreadActionMenuItems(
       : []),
     {
       id: "copy",
-      label: label("sidebar.action.copy", "Copy"),
+      label: translate("sidebar.action.copy"),
       icon: "copy",
       separatorBefore: true,
       children: [
-        { id: "copy-path", label: label("sidebar.action.path", "Path"), icon: "folder" },
+        { id: "copy-path", label: translate("sidebar.action.path"), icon: "folder" },
         ...(state.branch
           ? [
               {
                 id: "copy-branch" as const,
-                label: label("sidebar.action.branch", "Branch"),
+                label: translate("sidebar.action.branch"),
                 icon: "git-branch",
               },
             ]
           : []),
         {
           id: "copy-thread",
-          label: label("sidebar.action.thread", "Thread"),
+          label: translate("sidebar.action.thread"),
           icon: "message-square",
         },
         {
           id: "copy-thread-id",
-          label: label("sidebar.action.threadId", "Thread ID"),
+          label: translate("sidebar.action.threadId"),
           icon: "hash",
         },
       ],
     },
-    { id: "project-settings", label: "Project settings", icon: "settings" },
+    {
+      id: "project-settings",
+      label: translate("sidebar.action.projectSettings"),
+      icon: "settings",
+    },
     {
       id: "archive",
-      label: label("sidebar.action.archive", "Archive thread"),
+      label: translate("sidebar.action.archive"),
       icon: "archive",
       disabled: state.isRunning,
       separatorBefore: true,
     },
     {
       id: "delete",
-      label: label("common.delete", "Delete"),
+      label: translate("common.delete"),
       destructive: true,
       icon: "trash",
     },

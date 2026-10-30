@@ -1,3 +1,4 @@
+import { readWebI18n } from "../../i18n/readWebI18n";
 import {
   AuthOrchestrationOperateScope,
   type EnvironmentId,
@@ -251,10 +252,19 @@ export const ChatHeader = memo(function ChatHeader({
       const api = readLocalApi();
       if (!api) return;
       void api.contextMenu
-        .show([{ id: "project-settings", label: "Project settings", icon: "settings" }], {
-          x: event.clientX,
-          y: event.clientY,
-        })
+        .show(
+          [
+            {
+              id: "project-settings",
+              label: readWebI18n().t("sidebar.action.projectSettings"),
+              icon: "settings",
+            },
+          ],
+          {
+            x: event.clientX,
+            y: event.clientY,
+          },
+        )
         .then((action) => {
           if (action === "project-settings") onOpenProjectSettings?.();
         });
